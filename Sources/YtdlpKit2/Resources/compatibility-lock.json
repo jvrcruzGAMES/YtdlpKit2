@@ -1,0 +1,9 @@
+{
+  "pythonABI": "cp314",
+  "nativeABI": 1,
+  "packages": {},
+  "ytDlp": "2026.08.19",
+  "ffmpegBridgeABI": 1,
+  "ffmpegKitNext": "9.0.0",
+  "ffmpeg": "9.0.1"
+}

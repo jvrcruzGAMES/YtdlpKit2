@@ -1,0 +1,7 @@
+{
+  "runtimeVersion": 1,
+  "pythonVersion": "3.14.x",
+  "pythonABI": "cp314",
+  "ytdlpKitVersion": "0.1.0",
+  "platforms": ["ios", "macos"]
+}

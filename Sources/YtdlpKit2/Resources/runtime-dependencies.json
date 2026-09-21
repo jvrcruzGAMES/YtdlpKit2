@@ -1,0 +1,8 @@
+{
+  "packages": {
+    "yt-dlp": { "requirement": "yt-dlp==2026.8.19", "role": "runtimeCore" },
+    "packaging": { "requirement": "packaging==25.0", "role": "runtimeCore" },
+    "yt-dlp-ejs": { "requirement": "yt-dlp-ejs==0.8.0", "role": "runtimeCore" },
+    "yt-dlp-apple-webkit-jsi": { "requirement": "yt-dlp-apple-webkit-jsi==0.1.1", "role": "runtimeCore" }
+  }
+}

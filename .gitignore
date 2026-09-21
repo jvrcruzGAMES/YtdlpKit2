@@ -1,0 +1,58 @@
+# SwiftPM and Xcode build products
+.build/
+.swiftpm/
+.native-build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.xcresult/
+*.dSYM/
+*.dSYM.zip
+*.profraw
+*.profdata
+
+# Python caches and local environments
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Local tooling and operating-system files
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea/
+.vscode/
+.direnv/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+*.swp
+*~
+result
+result-*
+
+# Reproducibly generated native release artifacts
+Native/CPython/Python.xcframework/
+Native/Brotli/_brotli.xcframework/
+Native/PythonExtensions/
+Native/FFmpegKitNext/
+Sources/YtdlpKit2/Resources/Runtime/python/
+
+# Third-party wheel payloads staged by Scripts/package-native-wheels.py.
+# Keep only YtdlpKit2's own Python bridge modules in source control.
+Sources/YtdlpKit2/Resources/Python/Cryptodome/
+Sources/YtdlpKit2/Resources/Python/cffi/
+Sources/YtdlpKit2/Resources/Python/cryptography/
+Sources/YtdlpKit2/Resources/Python/curl_cffi/
+Sources/YtdlpKit2/Resources/Python/brotli.py
+Sources/YtdlpKit2/Resources/Python/_cffi_backend*

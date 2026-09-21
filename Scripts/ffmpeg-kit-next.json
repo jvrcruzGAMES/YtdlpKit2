@@ -1,0 +1,14 @@
+{
+  "ffmpegKitNextVersion": "9.0.0",
+  "ffmpegKitNextCommit": "a724ed99583dcfe2af497c794fdd6b24ddd54a4e",
+  "source": "https://github.com/arthenica/ffmpeg-kit-next/archive/a724ed99583dcfe2af497c794fdd6b24ddd54a4e.tar.gz",
+  "sha256": "a13686c03fb54b830841f7a4943be3ceb83339ae48adccf6ec9dc60e451f59bb",
+  "ffmpegVersion": "9.0.1",
+  "nixProfile": "xcode26",
+  "deploymentTargets": {"ios": "16.0", "macos": "13.0"},
+  "architectures": {"ios": ["arm64", "arm64-simulator", "x86-64"], "macos": ["arm64", "x86-64"]},
+  "profile": "lgpl-3.0",
+  "enabledSystemLibraries": ["AudioToolbox", "AVFoundation", "VideoToolbox", "bzip2", "zlib"],
+  "gplLibraries": [],
+  "frameworks": ["ffmpegkit", "libavcodec", "libavdevice", "libavfilter", "libavformat", "libavutil", "libswresample", "libswscale"]
+}

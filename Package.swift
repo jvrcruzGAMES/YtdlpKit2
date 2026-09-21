@@ -1,0 +1,98 @@
+// swift-tools-version: 6.0
+import PackageDescription
+import Foundation
+
+// Release packaging stages this generated artifact before manifest resolution.
+let bundledRuntime = "Native/CPython/Python.xcframework"
+let packageDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+let hasBundledRuntime = FileManager.default.fileExists(
+    atPath: packageDirectory.appendingPathComponent(bundledRuntime + "/Info.plist").path
+)
+let bundledBrotli = "Native/Brotli/_brotli.xcframework"
+let hasBundledBrotli = FileManager.default.fileExists(
+    atPath: packageDirectory.appendingPathComponent(bundledBrotli + "/Info.plist").path
+)
+var nativeDependencies: [Target.Dependency] = []
+var nativeCSettings: [CSetting] = []
+if hasBundledBrotli {
+    nativeDependencies.append("YtdlpKit2Brotli")
+    nativeCSettings.append(.define("YTDLPKIT_HAS_BROTLI"))
+}
+var ytdlpDependencies: [Target.Dependency] = [
+    "YtdlpKit2Native",
+    .product(name: "PythonKit", package: "PythonKit"),
+]
+if hasBundledRuntime { ytdlpDependencies.append("YtdlpKit2CPython") }
+let extensionDirectory = packageDirectory.appendingPathComponent("Native/PythonExtensions")
+let bundledExtensions = ((try? FileManager.default.contentsOfDirectory(
+    at: extensionDirectory, includingPropertiesForKeys: nil
+)) ?? []).filter { $0.pathExtension == "xcframework" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+let extensionTargets: [(name: String, path: String)] = bundledExtensions.enumerated().map { index, url in
+    ("YtdlpKit2PyExt\(index)", "Native/PythonExtensions/\(url.lastPathComponent)")
+}
+// Presence is evaluated when release tooling stages the pinned artifacts.
+let ffmpegLibraries = ["ffmpegkit", "libavcodec", "libavdevice", "libavfilter", "libavformat", "libavutil", "libswresample", "libswscale"]
+let hasFFmpegKitNext = ffmpegLibraries.allSatisfy {
+    FileManager.default.fileExists(atPath: packageDirectory
+        .appendingPathComponent("Native/FFmpegKitNext/\($0).xcframework/Info.plist").path)
+}
+if hasFFmpegKitNext {
+    ytdlpDependencies.append(contentsOf: ffmpegLibraries.map { .target(name: "YtdlpKit2FFmpeg_\($0)") })
+}
+ytdlpDependencies.append(contentsOf: extensionTargets.map {
+    .target(name: $0.name, condition: .when(platforms: [.iOS]))
+})
+
+var packageTargets: [Target] = [
+    .target(name: "YtdlpKit2Native", dependencies: nativeDependencies,
+            publicHeadersPath: "include", cSettings: nativeCSettings),
+    .target(
+        name: "YtdlpKit2",
+        dependencies: ytdlpDependencies,
+        resources: [
+            .copy("Resources/Python"),
+            .copy("Resources/Runtime"),
+            .process("Resources/runtime-manifest.json"),
+            .process("Resources/native-packages.json"),
+            .process("Resources/runtime-dependencies.json"),
+            .process("Resources/compatibility-lock.json"),
+            .process("Resources/ffmpeg-native-manifest.json"),
+        ],
+        linkerSettings: [
+            .linkedFramework("Foundation"),
+            .linkedFramework("WebKit"),
+            .linkedFramework("CoreFoundation"),
+            .linkedFramework("CoreGraphics"),
+        ]
+    ),
+    .testTarget(name: "YtdlpKit2Tests", dependencies: ["YtdlpKit2"]),
+]
+if hasBundledRuntime {
+    packageTargets.append(.binaryTarget(name: "YtdlpKit2CPython", path: bundledRuntime))
+}
+if hasBundledBrotli {
+    packageTargets.append(.binaryTarget(name: "YtdlpKit2Brotli", path: bundledBrotli))
+}
+packageTargets.append(contentsOf: extensionTargets.map {
+    .binaryTarget(name: $0.name, path: $0.path)
+})
+if hasFFmpegKitNext {
+    packageTargets.append(contentsOf: ffmpegLibraries.map {
+        .binaryTarget(name: "YtdlpKit2FFmpeg_\($0)", path: "Native/FFmpegKitNext/\($0).xcframework")
+    })
+}
+
+let package = Package(
+    name: "YtdlpKit2",
+    platforms: [
+        .iOS(.v16),
+        .macOS(.v13),
+    ],
+    products: [
+        .library(name: "YtdlpKit2", targets: ["YtdlpKit2"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/pvieito/PythonKit.git", exact: "1.0.0"),
+    ],
+    targets: packageTargets
+)

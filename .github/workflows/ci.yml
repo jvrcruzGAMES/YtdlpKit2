@@ -1,0 +1,28 @@
+name: Swift CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: swift build
+      - name: Test foundation
+        run: swift test
+      - name: Validate Python sources
+        run: python3 -m compileall -q Sources/YtdlpKit2/Resources/Python
+      - name: Validate native package manifest and SBOM inputs
+        run: |
+          Scripts/build-native-packages.py
+          Scripts/generate-sbom.py
+
+  apple-simulators:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate iOS simulator package build
+        run: xcodebuild -scheme YtdlpKit2 -destination 'generic/platform=iOS Simulator' build

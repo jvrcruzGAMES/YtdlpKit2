@@ -1,0 +1,42 @@
+{
+  "packages": [
+    {
+      "name": "cffi", "version": "2.0.0", "imports": ["cffi", "_cffi_backend"],
+      "wheels": {
+        "ios-arm64": ["https://pypi.flet.dev/-/ver_1OLGIE/cffi-2.0.0-1-cp314-cp314-ios_13_0_arm64_iphoneos.whl", "7f1bd03b461566f31124e74abcf512a5753ba1d68d272173d5d061aa224c6fa5"],
+        "ios-simulator-arm64": ["https://pypi.flet.dev/-/ver_yWlML/cffi-2.0.0-1-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl", "aa8bc7bf0f310f70f309dd8f40764cd2d10bc5692431a3c7f8cd537474dbcfc9"],
+        "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_16W8G2/cffi-2.0.0-1-cp314-cp314-ios_13_0_x86_64_iphonesimulator.whl", "bac9a3e258787cd3fb7437445f2e0e288b113981b9e4ca1b6cfb6286cd7cfcd9"],
+        "macos-arm64": ["https://files.pythonhosted.org/packages/59/dd/27e9fa567a23931c838c6b02d0764611c62290062a6d4e8ff7863daf9730/cffi-2.0.0-cp314-cp314-macosx_11_0_arm64.whl", "c654de545946e0db659b3400168c9ad31b5d29593291482c43e3564effbcee13"],
+        "macos-x86_64": ["https://files.pythonhosted.org/packages/92/c4/3ce07396253a83250ee98564f8d7e9789fab8e58858f35d07a9a2c78de9f/cffi-2.0.0-cp314-cp314-macosx_10_13_x86_64.whl", "fc33c5141b55ed366cfaad382df24fe7dcbc686de5be719b207bb248e3053dc5"]
+      }
+    },
+    {
+      "name": "cryptography", "version": "48.0.0", "imports": ["cryptography"],
+      "wheels": {
+        "ios-arm64": ["https://pypi.flet.dev/-/ver_1FyoCU/cryptography-48.0.0-10-cp314-cp314-ios_13_0_arm64_iphoneos.whl", "d4398b13f799bd53ae5bae711017e0088b33f3c6891a44831d5861e18eeba398"],
+        "ios-simulator-arm64": ["https://pypi.flet.dev/-/ver_mNTtg/cryptography-48.0.0-10-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl", "01bb4b64a7bc455a7fcadb12c11e7fe796002d657f7f536e2584a3cdc17d0f70"],
+        "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_1uvUfm/cryptography-48.0.0-10-cp314-cp314-ios_13_0_x86_64_iphonesimulator.whl", "6e08350d54870818363e56f1d5c8c3519e9518c0fa2781d901e1a5cf4b70f69b"],
+        "macos-universal2": ["https://files.pythonhosted.org/packages/df/3d/01f6dd9190170a5a241e0e98c2d04be3664a9e6f5b9b872cde63aff1c3dd/cryptography-48.0.0-cp311-abi3-macosx_10_9_universal2.whl", "0c558d2cdffd8f4bbb30fc7134c74d2ca9a476f830bb053074498fbc86f41ed6"]
+      }
+    },
+    {
+      "name": "curl-cffi", "version": "0.16.2", "imports": ["curl_cffi"],
+      "wheels": {
+        "ios-arm64": ["https://pypi.flet.dev/-/ver_GXwh2/curl_cffi-0.16.2-1-cp314-cp314-ios_13_0_arm64_iphoneos.whl", "9dd97ce61d28d13049e1cd8572d56219f9a9fa13a8ba4539da1f44758e5e263b"],
+        "ios-simulator-arm64": ["https://pypi.flet.dev/-/ver_1eo7bl/curl_cffi-0.16.2-1-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl", "a35a63178ba1cb75b95069faf0b655d543937e29fadc95c097e7cf71dc54c30a"],
+        "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_1MnD14/curl_cffi-0.16.2-1-cp314-cp314-ios_13_0_x86_64_iphonesimulator.whl", "6fdc0c8e0180969187cad1f92e13a16995e31e86031eb2d2fd31adcf249fb2e0"],
+        "macos-arm64": ["https://files.pythonhosted.org/packages/6c/21/57a757acb1b43ef944735835b50cfdf00150113164d755a99f8d21d875f3/curl_cffi-0.16.2-cp310-abi3-macosx_11_0_arm64.whl", "e6f238ddfef41a5d074bcc2f6b8fc21e653a1e7d4d9a2163839030d9de24b2ca"],
+        "macos-x86_64": ["https://files.pythonhosted.org/packages/29/ac/3772115da1b6b9b6064e8c128dfeb6c9e708dd4603a17eb52f658558c5e1/curl_cffi-0.16.2-cp310-abi3-macosx_10_9_x86_64.whl", "afe05fc1022039c2853177ef13f67b7a9915bff62e35eb4fa1a295166bc55a34"]
+      }
+    },
+    {
+      "name": "pycryptodomex", "version": "3.21.0", "imports": ["Cryptodome"],
+      "wheels": {
+        "ios-arm64": ["https://pypi.flet.dev/-/ver_CewLA/pycryptodomex-3.21.0-2-cp36-abi3-ios_13_0_arm64_iphoneos.whl", "fa7ccb46b1faaf6b924ca17adbae8a6767708275a62944af33cb7d786049442e"],
+        "ios-simulator-arm64": ["https://pypi.flet.dev/-/ver_1JZM2t/pycryptodomex-3.21.0-2-cp36-abi3-ios_13_0_arm64_iphonesimulator.whl", "922a1ac8f0d970e93fe36d7419f365a060d4aea319914f45e35b96fde631e6ea"],
+        "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_2fANti/pycryptodomex-3.21.0-2-cp36-abi3-ios_13_0_x86_64_iphonesimulator.whl", "3c7e79f085c851ed8c4df4dddfa3050d97d56bf9f4977f4e54225db4156711d3"],
+        "macos-universal2": ["https://files.pythonhosted.org/packages/22/5e/99f217d9881eead69607a2248dd7bbdf610837d7f5ad53f45a6cb71bbbfb/pycryptodomex-3.21.0-cp36-abi3-macosx_10_9_universal2.whl", "34325b84c8b380675fd2320d0649cdcbc9cf1e0d1526edbe8fce43ed858cdc7e"]
+      }
+    }
+  ]
+}

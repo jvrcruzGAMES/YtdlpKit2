@@ -1,0 +1,19 @@
+name: Rebuild native Python packages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  native-packages:
+    runs-on: macos-15
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install python@3.14
+      - run: Scripts/build-python.sh
+      - run: Scripts/build-native-packages.py --build
+      - run: swift test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YtdlpKit2-native-cp314
+          path: Native/Brotli/_brotli.xcframework

@@ -1,0 +1,72 @@
+{
+  "architectures": [
+    "ios-arm64",
+    "ios-simulator-arm64",
+    "ios-simulator-x86_64",
+    "macos-arm64",
+    "macos-x86_64"
+  ],
+  "artifactSHA256": {
+    "ffmpegkit": {
+      "ios-arm64": "214c83a407596f3f6a7d0acc0ef5b1ec875aa51eb6d6bd19957ded372f5ee5a3",
+      "ios-arm64_x86_64-simulator": "1dd74ea8960daefc7913f6c30f0abccbec3760dca3fde7cd7050278c7547cfcb",
+      "macos-arm64_x86_64": "2bdc08cf14c6a18310a2b00153e9c51ac22d18e83a53cd02f549cc733c350fc2"
+    },
+    "libavcodec": {
+      "ios-arm64": "242bf0d9c7c0dfd2777598ef76679088c109a8d8750da27ff74e4a7d63c0818d",
+      "ios-arm64_x86_64-simulator": "c681a6238a8bf875c7b5d9f70cc79064a938a86922287248934b2710587d1f09",
+      "macos-arm64_x86_64": "0920f6202dc9bd2c4503b843b77a2edfe28b774c7b15e1a1cf0d8cde0f976727"
+    },
+    "libavdevice": {
+      "ios-arm64": "65ad7f3f9ecf0292b95597feb5420bdb5965c6dd09181cb6702d4068696b5e9f",
+      "ios-arm64_x86_64-simulator": "9ede02c2ccef820bc1109a5740d95789a58c355c078e6e1205fac8faa816d5d6",
+      "macos-arm64_x86_64": "a242ea5fc5b90159b4c09fd774ee59c048d0868764998a42946a76de25331733"
+    },
+    "libavfilter": {
+      "ios-arm64": "4c843843b967139c33eeb30ee94102d02de4ad87d4fb540daa6a894c4d5d91ab",
+      "ios-arm64_x86_64-simulator": "301ecdc340f79b4621e6205b5b056e58252c671f9ba40505c05d36458c8b5e9d",
+      "macos-arm64_x86_64": "93ac7f6c45078b9498c1dbfb0d9499e9dac87eee52af62c8ceb884a422313aa4"
+    },
+    "libavformat": {
+      "ios-arm64": "7b46d67a2917b66a1f262dc0a65d931aef8a236ebcac83599d18e890bc1bbc0d",
+      "ios-arm64_x86_64-simulator": "ed8dc3f26e454cfbaf699ebe7e8b1ebce6ea677af86b1bb61f1d815a8cbd9695",
+      "macos-arm64_x86_64": "88d25a2e99094fce29525f079bc6e894ecb0157459d14a4facf572c8d90bf0fc"
+    },
+    "libavutil": {
+      "ios-arm64": "b4be38c77a8ccb0ac17f35f95d671031b84239f53ef7e7f508c8f76d430583ea",
+      "ios-arm64_x86_64-simulator": "263174d06c7f71c92bb77bb286bb9cc5e24821eae0f6768eff30213091d18420",
+      "macos-arm64_x86_64": "d283560d91f9b672557e6e5c5602cc8dc1d8672cfd1c2a132d0a63d24602a411"
+    },
+    "libswresample": {
+      "ios-arm64": "9c65486ef87644dfcdacf0a4c507cc8babfadae5c1829e4223dc92cc0c4f276b",
+      "ios-arm64_x86_64-simulator": "555ef5161e24569279b9a85d1fd30f9d31403d3471051e29741fb0cb19908f6f",
+      "macos-arm64_x86_64": "dfc3a37e865a484b2b5cfc918261934942db62450a7463ecc64c42d1adbd3ad6"
+    },
+    "libswscale": {
+      "ios-arm64": "e97e0cd7fe22617637aad8bec7e6d0fcfe5e50792c9e431d526c959e32a8d0f8",
+      "ios-arm64_x86_64-simulator": "96a02ddab8f8bd9d341d5b6679620d76c57caadc446744c4e8cd7a1a4314cdcc",
+      "macos-arm64_x86_64": "28b0c58148ab9b124a772d38986f5d80690ade5ccd98224359d4e93f508139ae"
+    }
+  },
+  "available": true,
+  "ffmpegBridgeABI": 1,
+  "ffmpegKitNextCommit": "a724ed99583dcfe2af497c794fdd6b24ddd54a4e",
+  "ffmpegKitNextVersion": "9.0.0",
+  "ffmpegVersion": "9.0.1",
+  "frameworks": [
+    "ffmpegkit",
+    "libavcodec",
+    "libavdevice",
+    "libavfilter",
+    "libavformat",
+    "libavutil",
+    "libswresample",
+    "libswscale"
+  ],
+  "gplLibraries": [],
+  "platforms": [
+    "ios",
+    "macos"
+  ],
+  "profile": "lgpl-3.0"
+}
