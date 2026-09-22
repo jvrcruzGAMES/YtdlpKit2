@@ -12,6 +12,10 @@ struct YtdlpNetworkTests {
     private static var enabled: Bool {
         testURL != nil && FileManager.default.fileExists(atPath: "Native/CPython/Python.xcframework")
     }
+    private static var gitEnabled: Bool {
+        ProcessInfo.processInfo.environment["YTDLPKIT_GIT_TEST"] == "1"
+            && FileManager.default.fileExists(atPath: "Native/CPython/Python.xcframework")
+    }
 
     @Test(
         "Extract metadata and perform a direct non-FFmpeg download",
@@ -31,5 +35,28 @@ struct YtdlpNetworkTests {
         )
         #expect(!result.files.isEmpty)
         #expect(result.files.allSatisfy { FileManager.default.fileExists(atPath: $0.path) })
+    }
+
+    @Test(
+        "GitHub pure-Python package installs its PyPI dependencies",
+        .enabled(if: Self.gitEnabled, "Set YTDLPKIT_GIT_TEST=1 and stage CPython")
+    )
+    func gitDependencies() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appending(path: "YtdlpKit2-git-test-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let manager = YtdlpPackageManager(configuration: .init(applicationSupportDirectory: root))
+        let repository = try #require(URL(string: "https://github.com/pypa/sampleproject.git"))
+        let package = try await manager.install(.git(repository))
+        #expect(package.normalizedName == "sampleproject")
+        #expect(package.source.gitRevision != nil)
+        #expect(try await manager.package(named: "peppercorn")?.role == .ytdlpDependency)
+    }
+}
+
+private extension PackageSource {
+    var gitRevision: String? {
+        if case let .git(_, revision) = self { return revision }
+        return nil
     }
 }

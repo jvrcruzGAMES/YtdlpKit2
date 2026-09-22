@@ -26,7 +26,14 @@ def _distribution_index():
         try:
             files = list(dist.files or ())
             roots = {str(Path(dist.locate_file(f)).resolve()) for f in files}
-            result.append((dist.metadata.get('Name'), dist.version, roots, dist.metadata))
+            # Source installs synthesized by YtdlpKit2 now contain RECORD, but
+            # retain a constrained root fallback for installations created by
+            # older library versions. Only use it when the distribution has no
+            # authoritative file inventory.
+            fallback_root = (str(Path(dist.locate_file('')).resolve())
+                             if not files else None)
+            result.append((dist.metadata.get('Name'), dist.version, roots,
+                           fallback_root, dist.metadata))
         except Exception:
             continue
     return result
@@ -36,8 +43,14 @@ def _owner(origin, distributions):
     if not origin:
         return None
     target = str(Path(origin).resolve())
-    for name, version, files, metadata in distributions:
-        if target in files:
+    for name, version, files, fallback_root, metadata in distributions:
+        owned = target in files
+        if fallback_root:
+            try:
+                owned = Path(target).is_relative_to(fallback_root)
+            except (TypeError, ValueError):
+                owned = False
+        if owned:
             return {'name': name, 'version': version, 'metadata': {
                 'description': metadata.get('Summary'),
                 'author': metadata.get('Author'),
@@ -104,7 +117,14 @@ def _refresh():
             name: cls for name, cls in spec.destination.value.items()
             if not getattr(cls, '__module__', '').startswith('yt_dlp_plugins.')
         }
-        spec.destination.value = {**regular, **builtins}
+        # yt-dlp prepends plugin extractors to its ordered registry. GenericIE
+        # matches every URL, so placing built-ins first makes every otherwise
+        # valid plugin unreachable. Preserve plugin overrides while appending
+        # only built-ins that the plugins did not replace.
+        merged = dict(regular)
+        merged.update((name, cls) for name, cls in builtins.items()
+                      if name not in merged)
+        spec.destination.value = merged
     all_plugins_loaded.value = True
     return errors
 
@@ -116,8 +136,11 @@ def _extractor(cls):
         'description': _text(getattr(cls, 'IE_DESC', None)),
         'valid_url_pattern': _text(getattr(cls, '_VALID_URL', None)),
         'working': bool(getattr(cls, '_WORKING', True)),
-        'age_limit': getattr(cls, 'AGE_LIMIT', None),
-        'supports_search': bool(getattr(cls, '_SEARCH_KEY', None)),
+        # Accessing an absent attribute through yt-dlp's lazy extractor proxy
+        # emits a misleading fallback warning. Class dictionaries are enough
+        # for optional descriptor metadata and have no loader side effects.
+        'age_limit': cls.__dict__.get('AGE_LIMIT'),
+        'supports_search': bool(cls.__dict__.get('_SEARCH_KEY')),
         'origin': _origin(cls),
     }
 
@@ -139,12 +162,15 @@ def _providers():
     for key, cls in _jsc_providers.value.items():
         module = cls.__module__
         external = module.startswith('yt_dlp_plugins.')
-        # Current provider API documents is_available as an inexpensive instance
-        # check, but construction needs a live extractor. Registration plus the
-        # provider's declared platform prerequisites is the safe scan-time check.
+        # Constructing a provider requires a live extractor. Mirror the plugin's
+        # platform prerequisite without instantiating it. CPython reports
+        # sys.platform == "ios" on iOS even though os.uname().sysname is Darwin.
         available = True
         if getattr(cls, 'PROVIDER_NAME', '') == 'apple-webkit-jsi':
-            available = sys.platform == 'darwin' and hasattr(os, 'uname')
+            available = (bool(getattr(cls, 'IS_AVAIL', True))
+                         and hasattr(os, 'uname')
+                         and os.uname().sysname == 'Darwin'
+                         and int(os.uname().release.split('.', 1)[0]) >= 20)
         providers.append({
             'name': _text(getattr(cls, 'PROVIDER_NAME', key)),
             'version': _text(getattr(cls, 'PROVIDER_VERSION', None)),
@@ -214,6 +240,7 @@ def list_plugin_paths():
 
 
 def matching_extractors(url):
+    _refresh()
     from yt_dlp.extractor import gen_extractor_classes
     result = []
     for cls in gen_extractor_classes():

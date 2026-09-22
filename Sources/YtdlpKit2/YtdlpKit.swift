@@ -44,8 +44,8 @@ public actor YtdlpKit {
                     if case .postProcessor = $1 { $0 + 1 } else { $0 }
                 },
                 jsChallengeProviders: providers,
-                requiredPluginsHealthy: inventory.contains {
-                    $0.isRequired && $0.health == .healthy
+                requiredPluginsHealthy: providers.contains {
+                    $0.name == "apple-webkit-jsi" && $0.available
                 }
             )
             if let media = try? await mediaProcessing.capabilities() {

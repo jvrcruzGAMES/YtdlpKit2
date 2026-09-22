@@ -100,7 +100,13 @@ public actor FFmpegKitMediaProcessingProvider: MediaProcessingProvider {
         defer { FileManager.default.changeCurrentDirectoryPath(oldDirectory) }
         return await withCheckedContinuation { continuation in
             let complete: (Session) -> Void = { session in
-                let output = session.getOutput() ?? ""
+                // FFprobe emits its machine-readable stdout through the
+                // session log pipeline. Completion can precede delivery of
+                // the final asynchronous log messages on iOS, so wait for the
+                // session's complete output before returning it to yt-dlp.
+                let output = probe
+                    ? (session.getAllLogsAsString() ?? "")
+                    : (session.getOutput() ?? "")
                 let code = Int32(session.getReturnCode()?.getValue() ?? -1)
                 let cancelled = session.getReturnCode().map(ReturnCode.isCancel) ?? false
                 let result = FFmpegExecutionResult(

@@ -46,12 +46,15 @@ real CPython extension in process.
 ## Distribution boundary
 
 Maintainers build and verify CPython XCFrameworks separately. The Swift package
-conditionally includes the local artifact so source-only foundation builds
+conditionally includes the local artifacts so source-only foundation builds
 remain possible, but `prepare()` never claims readiness without the signed
-runtime. Release automation must stage the artifact before archiving the
-package. The runtime manifest's major/minor version must match the interpreter.
+runtime. Release automation must stage the interpreter, runtime resource tree,
+and `Native/PythonStdlibExtensions` before archiving the package. CPython's
+compiled standard-library modules are signed frameworks on iOS and ordinary
+extension modules on macOS. The runtime manifest's major/minor version must
+match the interpreter.
 
 yt-dlp is not a package resource. `YtdlpPackageManager` downloads its pinned
 pure-Python wheel from PyPI, verifies the published hash, and atomically commits
-it to a versioned managed root. The same transaction engine installs packaging,
+it to the shared `packages/installed` site-packages root. The same transaction engine installs packaging,
 dependencies, and user distributions without changing extraction APIs.

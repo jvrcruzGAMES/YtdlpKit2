@@ -10,11 +10,76 @@ _operation_id = contextvars.ContextVar("ytdlpkit_media_operation", default="")
 _installed = False
 
 
+def _normalized_ffprobe_stdout(argv, stdout):
+    """Return the complete JSON document from FFprobeKit session output.
+
+    FFprobeKit obtains stdout through its log/session plumbing. On iOS that
+    stream can occasionally contain a duplicated prefix or another delivered
+    log fragment. yt-dlp's metadata probes always request JSON and require a
+    clean document, just like subprocess.PIPE would provide.
+    """
+    formats = [str(argv[index + 1]).lower()
+               for index, value in enumerate(argv[:-1])
+               if value in ("-of", "-print_format")]
+    if not any(value == "json" or value.startswith("json=") for value in formats):
+        return stdout
+    try:
+        json.loads(stdout)
+        return stdout
+    except (TypeError, ValueError):
+        pass
+
+    def balanced_json_objects(text):
+        for start, character in enumerate(text):
+            if character != "{":
+                continue
+            depth = 0
+            in_string = False
+            escaped = False
+            for end in range(start, len(text)):
+                current = text[end]
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif current == "\\":
+                        escaped = True
+                    elif current == '"':
+                        in_string = False
+                    continue
+                if current == '"':
+                    in_string = True
+                elif current == "{":
+                    depth += 1
+                elif current == "}":
+                    depth -= 1
+                    if depth == 0:
+                        yield text[start:end + 1]
+                        break
+
+    candidates = []
+    for candidate in balanced_json_objects(stdout):
+        if '"streams"' not in candidate and '"format"' not in candidate:
+            continue
+        try:
+            value = json.loads(candidate)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(value, dict) and ("streams" in value or "format" in value):
+            candidates.append((len(candidate), value))
+    if candidates:
+        _, value = max(candidates, key=lambda item: item[0])
+        return json.dumps(value, ensure_ascii=False)
+    return stdout
+
+
 def _execute(kind, argv):
     native = __import__("_ytdlpkit_native")
     function = native.ffmpeg if kind == "ffmpeg" else native.ffprobe
     result = json.loads(function(_operation_id.get(), json.dumps(list(argv))))
-    return result.get("stdout", ""), result.get("stderr", ""), int(result["returncode"])
+    stdout = result.get("stdout", "")
+    if kind == "ffprobe" and int(result["returncode"]) == 0:
+        stdout = _normalized_ffprobe_stdout(argv, stdout)
+    return stdout, result.get("stderr", ""), int(result["returncode"])
 
 
 def install():

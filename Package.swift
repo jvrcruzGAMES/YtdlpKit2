@@ -30,6 +30,27 @@ let bundledExtensions = ((try? FileManager.default.contentsOfDirectory(
 let extensionTargets: [(name: String, path: String)] = bundledExtensions.enumerated().map { index, url in
     ("YtdlpKit2PyExt\(index)", "Native/PythonExtensions/\(url.lastPathComponent)")
 }
+let stdlibExtensionDirectory = packageDirectory.appendingPathComponent("Native/PythonStdlibExtensions")
+let discoveredStdlibExtensions = ((try? FileManager.default.contentsOfDirectory(
+    at: stdlibExtensionDirectory, includingPropertiesForKeys: nil
+)) ?? []).filter { $0.pathExtension == "xcframework" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+let knownStdlibExtensionNames = [
+    "_asyncio", "_bisect", "_blake2", "_bz2", "_codecs_cn", "_codecs_hk",
+    "_codecs_iso2022", "_codecs_jp", "_codecs_kr", "_codecs_tw", "_csv",
+    "_ctypes", "_dbm", "_decimal", "_elementtree", "_hashlib", "_heapq",
+    "_hmac", "_interpchannels", "_interpqueues", "_interpreters", "_json",
+    "_lsprof", "_lzma", "_md5", "_multibytecodec", "_pickle", "_queue",
+    "_random", "_remote_debugging", "_sha1", "_sha2", "_sha3", "_socket",
+    "_sqlite3", "_ssl", "_statistics", "_struct", "_uuid", "_zoneinfo",
+    "_zstd", "array", "binascii", "cmath", "fcntl", "math", "mmap",
+    "pyexpat", "resource", "select", "termios", "unicodedata", "zlib",
+]
+let bundledStdlibExtensions = discoveredStdlibExtensions.isEmpty
+    ? knownStdlibExtensionNames.map { stdlibExtensionDirectory.appendingPathComponent("\($0).xcframework") }
+    : discoveredStdlibExtensions
+let stdlibExtensionTargets: [(name: String, path: String)] = bundledStdlibExtensions.enumerated().map { index, url in
+    ("YtdlpKit2PyStdlib\(index)", "Native/PythonStdlibExtensions/\(url.lastPathComponent)")
+}
 // Presence is evaluated when release tooling stages the pinned artifacts.
 let ffmpegLibraries = ["ffmpegkit", "libavcodec", "libavdevice", "libavfilter", "libavformat", "libavutil", "libswresample", "libswscale"]
 let hasFFmpegKitNext = ffmpegLibraries.allSatisfy {
@@ -40,6 +61,9 @@ if hasFFmpegKitNext {
     ytdlpDependencies.append(contentsOf: ffmpegLibraries.map { .target(name: "YtdlpKit2FFmpeg_\($0)") })
 }
 ytdlpDependencies.append(contentsOf: extensionTargets.map {
+    .target(name: $0.name, condition: .when(platforms: [.iOS]))
+})
+ytdlpDependencies.append(contentsOf: stdlibExtensionTargets.map {
     .target(name: $0.name, condition: .when(platforms: [.iOS]))
 })
 
@@ -74,6 +98,9 @@ if hasBundledBrotli {
     packageTargets.append(.binaryTarget(name: "YtdlpKit2Brotli", path: bundledBrotli))
 }
 packageTargets.append(contentsOf: extensionTargets.map {
+    .binaryTarget(name: $0.name, path: $0.path)
+})
+packageTargets.append(contentsOf: stdlibExtensionTargets.map {
     .binaryTarget(name: $0.name, path: $0.path)
 })
 if hasFFmpegKitNext {

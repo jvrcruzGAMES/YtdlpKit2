@@ -128,10 +128,29 @@ public actor PythonRuntime {
         try withGIL { try WheelInspector.decodeInspection(PythonBridge().inspectWheel(url)) }
     }
 
+    func inspectSourceArchive(_ url: URL, fallbackVersion: String) throws -> WheelInspection {
+        try withGIL {
+            try WheelInspector.decodeInspection(
+                PythonBridge().inspectSourceArchive(url, fallbackVersion: fallbackVersion)
+            )
+        }
+    }
+
     func extractWheel(_ wheel: URL, to destination: URL, stripNative: Bool) throws -> [String] {
         try withGIL {
             try WheelInspector.decodeExtraction(
                 PythonBridge().extractWheel(wheel, to: destination, stripNative: stripNative)
+            )
+        }
+    }
+
+    func extractSourceArchive(_ archive: URL, to destination: URL,
+                              fallbackVersion: String) throws -> [String] {
+        try withGIL {
+            try WheelInspector.decodeExtraction(
+                PythonBridge().extractSourceArchive(
+                    archive, to: destination, fallbackVersion: fallbackVersion
+                )
             )
         }
     }
@@ -146,6 +165,10 @@ public actor PythonRuntime {
 
     func validateImports(_ modules: [String]) throws {
         try withGIL { try PythonBridge().validateImports(modules) }
+    }
+
+    func configureCertificateAuthorities() throws -> String {
+        try withGIL { try PythonBridge().configureCertificateAuthorities() }
     }
 
     func parseRequirement(_ requirement: String, environmentJSON: String) throws -> String {

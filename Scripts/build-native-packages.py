@@ -111,6 +111,64 @@ def build_brotli(package):
     run(ROOT / "Scripts/package-brotli-xcframework.py")
 
 
+def build_ada_url(package):
+    """Cross-build ada-url's CFFI extension for every supported iOS slice."""
+    run(ROOT / "Scripts/download-python-runtime.py")
+    support = BUILD / "cpython-support"
+    ios = support / "ios/Python.xcframework"
+    if not ios.exists():
+        support.mkdir(parents=True, exist_ok=True)
+        distribution = json.loads((ROOT / "Scripts/cpython-distribution.json").read_text())
+        artifact = distribution["artifacts"]["iOS"]
+        archive = BUILD / "cpython-dist" / artifact["url"].rsplit("/", 1)[-1]
+        extract(archive, support / "ios")
+
+    source_archive = BUILD / "downloads" / f"ada_url-{package['version']}.tar.gz"
+    download(package["source"], package["sha256"], source_archive)
+    source_parent = BUILD / "native-src"
+    extracted = source_parent / f"ada_url-{package['version']}"
+    if extracted.exists():
+        shutil.rmtree(extracted)
+    extract(source_archive, source_parent)
+
+    host_python = shutil.which("python3.14")
+    if not host_python:
+        raise SystemExit("python3.14 is required to build cp314 native packages")
+    venv = BUILD / "xbuild-venv"
+    if not (venv / "bin/xbuild").exists():
+        run(host_python, "-m", "venv", venv)
+        run(venv / "bin/pip", "install", "xbuild==0.2.0", "setuptools==84.0.0")
+    xbuild = venv / "bin/xbuild"
+    cross_env = os.environ.copy()
+    cross_env["PATH"] = os.pathsep.join(map(str, [
+        ios / "ios-arm64/bin",
+        ios / "ios-arm64_x86_64-simulator/bin",
+    ])) + os.pathsep + cross_env["PATH"]
+    # ada.cpp is compiled with clang++, but setuptools links the CFFI module
+    # through clang because the generated wrapper is C. Link libc++ explicitly.
+    cross_env["LDFLAGS"] = "-lc++ " + cross_env.get("LDFLAGS", "")
+    configs = [
+        (ios / "ios-arm64/platform-config/arm64-iphoneos/_sysconfig_vars__ios_arm64-iphoneos.json",
+         "ios-arm64"),
+        (ios / "ios-arm64_x86_64-simulator/platform-config/arm64-iphonesimulator/_sysconfig_vars__ios_arm64-iphonesimulator.json",
+         "ios-simulator-arm64"),
+    ]
+    x86_source = ios / "ios-arm64_x86_64-simulator/platform-config/x86_64-iphonesimulator/_sysconfig_vars__ios_x86_64-iphonesimulator.json"
+    x86_config = x86_source.with_name("_sysconfig_vars__ios_x86-64-iphonesimulator.json")
+    shutil.copy2(x86_source, x86_config)
+    x86_data_source = x86_source.with_name("_sysconfigdata__ios_x86_64-iphonesimulator.py")
+    shutil.copy2(x86_data_source, x86_source.with_name("_sysconfigdata__ios_x86-64-iphonesimulator.py"))
+    configs.append((x86_config, "ios-simulator-x86_64"))
+    wheels = BUILD / "native-wheels"
+    for config, output in configs:
+        destination = wheels / output
+        destination.mkdir(parents=True, exist_ok=True)
+        for stale in destination.glob(f"ada_url-{package['version']}-*.whl"):
+            stale.unlink()
+        run(xbuild, "--sysconfig", config, "--outdir", destination, extracted,
+            env=cross_env)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", default="Scripts/native-packages.json")
@@ -141,6 +199,9 @@ def main():
         for package in manifest["packages"]:
             if package["name"] == "Brotli":
                 build_brotli(package)
+            elif package["name"] == "ada-url":
+                build_ada_url(package)
+                built_wheels = True
             else:
                 built_wheels = True
         if built_wheels:

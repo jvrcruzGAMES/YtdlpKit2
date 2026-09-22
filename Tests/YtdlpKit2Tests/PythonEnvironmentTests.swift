@@ -31,6 +31,18 @@ struct RuntimeFoundationTests {
         }
     }
 
+    @Test("Default managed packages live in Documents")
+    func documentsDefault() throws {
+        let documents = try #require(FileManager.default.urls(
+            for: .documentDirectory, in: .userDomainMask
+        ).first)
+        let environment = try PythonEnvironment()
+        #expect(environment.rootDirectory == documents.appending(
+            path: "YtdlpKit2", directoryHint: .isDirectory
+        ))
+        #expect(environment.packagesDirectory.path.hasPrefix(documents.path + "/"))
+    }
+
     @Test("Search paths are normalized and deduplicated")
     func paths() {
         var manager = PythonPathManager()

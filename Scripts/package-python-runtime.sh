@@ -36,7 +36,14 @@ for framework in $frameworks; do
 done
 xcodebuild -create-xcframework "$@" -output "$destination"
 
-stdlib=$(find "$stage" -type d -path '*/lib/python3.14' -print -quit)
+# Use the macOS library as the shared source tree; the iOS extension modules
+# are replaced below by signed framework markers. This keeps one resource
+# bundle usable on both platforms without relying on find traversal order.
+stdlib=$(find "$stage" -type d \
+    -path '*/macos-*/Python.framework/Versions/3.14/lib/python3.14' -print -quit)
+if [ -z "$stdlib" ]; then
+    stdlib=$(find "$stage" -type d -path '*/lib/python3.14' -print -quit)
+fi
 if [ -z "$stdlib" ]; then
     echo "No Python 3.14 standard library found in support package(s)" >&2
     exit 1
@@ -45,4 +52,5 @@ python_home="$project_dir/Sources/YtdlpKit2/Resources/Runtime/python"
 rm -rf "$python_home"
 mkdir -p "$python_home/lib"
 ditto "$stdlib" "$python_home/lib/python3.14"
+"$script_dir/package-python-stdlib.py" "$stage" "$python_home"
 "$script_dir/verify-python-runtime.sh"

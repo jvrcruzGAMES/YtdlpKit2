@@ -2,13 +2,31 @@ import Foundation
 import Testing
 @testable import YtdlpKit2
 
+#if os(iOS)
+@Suite("iOS CPython standard library", .serialized)
+struct IOSPythonStdlibTests {
+    @Test("Default extension modules load from signed frameworks")
+    func defaultExtensionModules() async throws {
+        let runtime = try PythonRuntime(configuration: .init(
+            applicationSupportDirectory: FileManager.default.temporaryDirectory
+                .appending(path: UUID().uuidString)))
+        try await runtime.prepare()
+        #expect(await runtime.status().state == .ready)
+    }
+}
+#endif
+
 @Suite("Embedded CPython integration", .serialized)
 struct EmbeddedRuntimeTests {
     private static var artifactIsStaged: Bool {
+        #if os(iOS)
+        return true
+        #else
         FileManager.default.fileExists(atPath: "Native/CPython/Python.xcframework")
             && FileManager.default.fileExists(
                 atPath: "Sources/YtdlpKit2/Resources/Runtime/python/lib/python3.14"
             )
+        #endif
     }
 
     @Test(
@@ -187,6 +205,22 @@ struct EmbeddedRuntimeTests {
         try await kit.prepare()
         let core = try await kit.packages.installedPackages()
         #expect(core.contains { $0.normalizedName == "packaging" })
+        #expect(core.contains {
+            $0.normalizedName == "certifi" && $0.role == .runtimeCore
+        })
+        for (name, version) in [
+            ("packaging", "26.3"),
+            ("charset-normalizer", "3.5.1"),
+            ("idna", "3.20"),
+            ("mutagen", "1.48.1"),
+            ("requests", "2.34.2"),
+            ("urllib3", "2.8.0"),
+            ("websockets", "17.1"),
+        ] {
+            #expect(core.contains {
+                $0.normalizedName == name && $0.version == version && $0.role == .runtimeCore
+            })
+        }
         #expect(core.contains { $0.normalizedName == "yt-dlp" })
         #expect(core.contains { $0.normalizedName == "yt-dlp-ejs" })
         #expect(core.contains { $0.normalizedName == "yt-dlp-apple-webkit-jsi" })
@@ -208,19 +242,60 @@ struct EmbeddedRuntimeTests {
             try await kit.plugins.uninstall(webkit)
         }
 
-        let installed = try await kit.packages.install(.pypiVersion("idna", "3.10"))
-        #expect(installed.normalizedName == "idna")
-        #expect(installed.version == "3.10")
+        let installed = try await kit.packages.install(.pypiVersion("tomli", "2.2.1"))
+        #expect(installed.normalizedName == "tomli")
+        #expect(installed.version == "2.2.1")
         #expect(installed.nativeStatus == .notRequired)
         #expect(FileManager.default.fileExists(atPath: installed.installLocation.path))
-        let updated = try await kit.packages.update("idna")
-        #expect(updated.normalizedName == "idna")
-        #expect(try await kit.packages.package(named: "idna")?.version == updated.version)
-        let constrained = try await kit.packages.install(.pep508("idna>=3,<4"))
+        #expect(FileManager.default.fileExists(
+            atPath: installed.installLocation.appending(path: "tomli").path
+        ))
+        let updated = try await kit.packages.update("tomli")
+        #expect(updated.normalizedName == "tomli")
+        #expect(try await kit.packages.package(named: "tomli")?.version == updated.version)
+        let constrained = try await kit.packages.install(.pep508("tomli>=2,<3"))
         #expect(constrained.version == updated.version)
-        try await kit.packages.uninstall("IDNA")
-        #expect(try await kit.packages.package(named: "idna") == nil)
-        #expect(!FileManager.default.fileExists(atPath: installed.installLocation.path))
+        try await kit.packages.uninstall("TOMLI")
+        #expect(try await kit.packages.package(named: "tomli") == nil)
+        #expect(FileManager.default.fileExists(atPath: installed.installLocation.path))
+        #expect(!FileManager.default.fileExists(
+            atPath: installed.installLocation.appending(path: "tomli").path
+        ))
+
+        // ada-url's upstream wheel currently lists build-only directories in
+        // top_level.txt. Native validation must use our signed manifest's
+        // declared import instead of attempting to import those names.
+        let adaURL = try await kit.packages.install(.pypiVersion("ada-url", "4.0.0"))
+        #expect(adaURL.nativeStatus == .bundledCompatible)
+        #expect(adaURL.metadata.topLevelModules.contains("build"))
+        try await kit.packages.uninstall("ada-url")
+
+        // hanime-plugin remains an opt-in user plugin. Its two native
+        // dependencies must resolve to bundled implementations, and refresh
+        // must register HanimeTVIE ahead of GenericIE.
+        let hanime = try await kit.plugins.install(
+            .pypiVersion("hanime-plugin", "2026.8.22")
+        )
+        #expect(hanime.source == .managedPyPI)
+        #expect(hanime.isLoaded)
+        for (name, version) in [("ada-url", "4.0.0"), ("pycryptodomex", "3.23.0")] {
+            let dependency = try #require(await kit.packages.package(named: name))
+            #expect(dependency.version == version)
+            #expect(dependency.nativeStatus == .bundledCompatible)
+            #expect(dependency.role == .ytdlpDependency)
+        }
+        let matches = try await kit.plugins.extractors(matchingURL: URL(
+            string: "https://hanime.tv/videos/hentai/fuzzy-lips-1"
+        )!)
+        #expect(matches.contains {
+            $0.source == .plugin(hanime.id) && $0.extractor.className == "HanimeTVIE"
+        })
+        let hstreamMatches = try await kit.plugins.extractors(matchingURL: URL(
+            string: "https://hstream.moe/hentai/harem-tou-e-youkoso-1"
+        )!)
+        #expect(hstreamMatches.first?.extractor.className == "HstreamIE")
+        #expect(hstreamMatches.first?.source == .plugin(hanime.id))
+        try await kit.plugins.uninstall(hanime)
 
         await #expect(throws: PackageManagerError.self) {
             try await kit.packages.uninstall("packaging")

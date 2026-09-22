@@ -10,19 +10,24 @@ public struct PythonEnvironment: Sendable {
     public let temporaryDirectory: URL
     public let metadataDirectory: URL
     public let logsDirectory: URL
+    private let legacyRootDirectory: URL?
 
     public init(baseDirectory: URL? = nil) throws {
         let base: URL
         if let baseDirectory {
             base = baseDirectory
+            legacyRootDirectory = nil
         } else {
-            guard let applicationSupport = FileManager.default.urls(
-                for: .applicationSupportDirectory,
+            guard let documents = FileManager.default.urls(
+                for: .documentDirectory,
                 in: .userDomainMask
             ).first else {
-                throw YtdlpKitError.filesystemError("Application Support is unavailable")
+                throw YtdlpKitError.filesystemError("Documents directory is unavailable")
             }
-            base = applicationSupport
+            base = documents
+            legacyRootDirectory = FileManager.default.urls(
+                for: .applicationSupportDirectory, in: .userDomainMask
+            ).first?.appending(path: "YtdlpKit2", directoryHint: .isDirectory)
         }
 
         rootDirectory = base.appending(path: "YtdlpKit2", directoryHint: .isDirectory)
@@ -39,6 +44,21 @@ public struct PythonEnvironment: Sendable {
 
     public func createDirectories() throws {
         do {
+            if let legacyRootDirectory,
+               FileManager.default.fileExists(atPath: legacyRootDirectory.path),
+               !FileManager.default.fileExists(atPath: rootDirectory.path) {
+                try FileManager.default.createDirectory(
+                    at: rootDirectory.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try FileManager.default.moveItem(at: legacyRootDirectory, to: rootDirectory)
+            }
+            if let legacyRootDirectory,
+               FileManager.default.fileExists(atPath: rootDirectory.path) {
+                try rewritePackageDatabase(
+                    replacing: legacyRootDirectory, with: rootDirectory
+                )
+            }
             for url in allDirectories {
                 try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
             }
@@ -50,5 +70,27 @@ public struct PythonEnvironment: Sendable {
     var allDirectories: [URL] {
         [rootDirectory, runtimeDirectory, sitePackagesDirectory, packagesDirectory,
          pluginsDirectory, cacheDirectory, temporaryDirectory, metadataDirectory, logsDirectory]
+    }
+
+    private func rewritePackageDatabase(replacing oldRoot: URL, with newRoot: URL) throws {
+        let database = newRoot.appending(path: "metadata/packages-v1.json")
+        guard FileManager.default.fileExists(atPath: database.path) else { return }
+        let data = try Data(contentsOf: database)
+        guard var document = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              var packages = document["packages"] as? [String: Any] else { return }
+        var changed = false
+        for (key, value) in packages {
+            guard var package = value as? [String: Any],
+                  let location = package["installLocation"] as? String,
+                  location.hasPrefix(oldRoot.absoluteString) else { continue }
+            package["installLocation"] = newRoot.absoluteString
+                + location.dropFirst(oldRoot.absoluteString.count)
+            packages[key] = package
+            changed = true
+        }
+        guard changed else { return }
+        document["packages"] = packages
+        try JSONSerialization.data(withJSONObject: document, options: [.sortedKeys])
+            .write(to: database, options: .atomic)
     }
 }

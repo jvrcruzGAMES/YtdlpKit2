@@ -30,12 +30,21 @@
       }
     },
     {
-      "name": "pycryptodomex", "version": "3.21.0", "imports": ["Cryptodome"],
+      "name": "pycryptodomex", "version": "3.23.0", "imports": ["Cryptodome"],
       "wheels": {
-        "ios-arm64": ["https://pypi.flet.dev/-/ver_CewLA/pycryptodomex-3.21.0-2-cp36-abi3-ios_13_0_arm64_iphoneos.whl", "fa7ccb46b1faaf6b924ca17adbae8a6767708275a62944af33cb7d786049442e"],
-        "ios-simulator-arm64": ["https://pypi.flet.dev/-/ver_1JZM2t/pycryptodomex-3.21.0-2-cp36-abi3-ios_13_0_arm64_iphonesimulator.whl", "922a1ac8f0d970e93fe36d7419f365a060d4aea319914f45e35b96fde631e6ea"],
-        "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_2fANti/pycryptodomex-3.21.0-2-cp36-abi3-ios_13_0_x86_64_iphonesimulator.whl", "3c7e79f085c851ed8c4df4dddfa3050d97d56bf9f4977f4e54225db4156711d3"],
-        "macos-universal2": ["https://files.pythonhosted.org/packages/22/5e/99f217d9881eead69607a2248dd7bbdf610837d7f5ad53f45a6cb71bbbfb/pycryptodomex-3.21.0-cp36-abi3-macosx_10_9_universal2.whl", "34325b84c8b380675fd2320d0649cdcbc9cf1e0d1526edbe8fce43ed858cdc7e"]
+        "ios-arm64": ["https://pypi.flet.dev/-/ver_1ytFYO/pycryptodomex-3.23.0-2-cp314-cp314-ios_13_0_arm64_iphoneos.whl", "c44bf8c27ce94c8955318e5563d00f45260d0f58e7493996fec443a6a6163143"],
+        "ios-simulator-arm64": ["https://pypi.flet.dev/-/ver_hnx6f/pycryptodomex-3.23.0-2-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl", "cb5d4ea5d091c7fb1ae9b71c867f29441102f30fef097e8a236413a60f848c7d"],
+        "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_1RWle8/pycryptodomex-3.23.0-2-cp314-cp314-ios_13_0_x86_64_iphonesimulator.whl", "6f862fc22277c4beda53a5866bf0a788c4e82e5bd0161d41bb81c2ab1cff7ec4"],
+        "macos-universal2": ["https://files.pythonhosted.org/packages/dd/9c/1a8f35daa39784ed8adf93a694e7e5dc15c23c741bbda06e1d45f8979e9e/pycryptodomex-3.23.0-cp37-abi3-macosx_10_9_universal2.whl", "06698f957fe1ab229a99ba2defeeae1c09af185baa909a31a5d1f9d42b1aaed6"]
+      }
+    },
+    {
+      "name": "ada-url", "version": "4.0.0", "imports": ["ada_url"],
+      "wheels": {
+        "ios-arm64": ["built://ada-url/ios-arm64", "source-verified"],
+        "ios-simulator-arm64": ["built://ada-url/ios-simulator-arm64", "source-verified"],
+        "ios-simulator-x86_64": ["built://ada-url/ios-simulator-x86_64", "source-verified"],
+        "macos-universal2": ["https://files.pythonhosted.org/packages/87/78/74c5cd93ca51841cbd78af1cb4b1b3cd2c09a9d7915138c402491f25219c/ada_url-4.0.0-cp314-cp314-macosx_10_15_universal2.whl", "39f4bd73f700a69c5b8a90e961ef941a6a746a0702267626d1c963d375bb9262"]
       }
     }
   ]

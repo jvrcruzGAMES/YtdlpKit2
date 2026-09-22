@@ -43,6 +43,7 @@ result-*
 
 # Reproducibly generated native release artifacts
 Native/CPython/Python.xcframework/
+Native/PythonStdlibExtensions/
 Native/Brotli/_brotli.xcframework/
 Native/PythonExtensions/
 Native/FFmpegKitNext/
@@ -54,5 +55,7 @@ Sources/YtdlpKit2/Resources/Python/Cryptodome/
 Sources/YtdlpKit2/Resources/Python/cffi/
 Sources/YtdlpKit2/Resources/Python/cryptography/
 Sources/YtdlpKit2/Resources/Python/curl_cffi/
+Sources/YtdlpKit2/Resources/Python/ada_url/
+Sources/YtdlpKit2/Resources/Python/docs/
 Sources/YtdlpKit2/Resources/Python/brotli.py
 Sources/YtdlpKit2/Resources/Python/_cffi_backend*

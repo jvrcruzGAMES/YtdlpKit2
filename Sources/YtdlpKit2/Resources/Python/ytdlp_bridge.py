@@ -9,11 +9,29 @@ from ytdlp_serialization import dumps, normalize_media
 PINNED_VERSION = "2026.08.19"
 
 
+def _install_ffmpeg_bridge():
+    # The Python package directory persists in Documents across app launches,
+    # but monkey patches do not. Reinstall the in-process FFmpeg hooks every
+    # time a fresh interpreter prepares or enters yt-dlp.
+    import ytdlp_ffmpeg_bridge
+    ytdlp_ffmpeg_bridge.install()
+
+
+def _prepare_dynamic_plugins():
+    # Managed packages can change after the interpreter and yt-dlp have already
+    # initialized. Refresh immediately before an operation so installs made
+    # through either the package or plugin API cannot leave yt-dlp's global
+    # extractor registry stale and fall through to GenericIE.
+    import ytdlp_plugin_bridge
+    ytdlp_plugin_bridge._refresh()
+
+
 def ensure_ytdlp(wheel_path, site_packages):
     os.makedirs(site_packages, exist_ok=True)
     try:
         import yt_dlp
         if yt_dlp.version.__version__ == PINNED_VERSION:
+            _install_ffmpeg_bridge()
             return yt_dlp.version.__version__
     except (ImportError, AttributeError):
         pass
@@ -26,8 +44,7 @@ def ensure_ytdlp(wheel_path, site_packages):
     import yt_dlp
     if yt_dlp.version.__version__ != PINNED_VERSION:
         raise RuntimeError(f"Expected yt-dlp {PINNED_VERSION}, loaded {yt_dlp.version.__version__}")
-    import ytdlp_ffmpeg_bridge
-    ytdlp_ffmpeg_bridge.install()
+    _install_ffmpeg_bridge()
     with yt_dlp.YoutubeDL({"quiet": True}):
         pass
     return yt_dlp.version.__version__
@@ -104,6 +121,8 @@ def _options(options_json, operation_id=""):
 
 def extract(url, options_json):
     try:
+        _install_ffmpeg_bridge()
+        _prepare_dynamic_plugins()
         from yt_dlp import YoutubeDL
         with YoutubeDL(_options(options_json)) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -119,6 +138,8 @@ def _files_under(directory):
 
 def download(url, options_json, operation_id, output_directory):
     try:
+        _install_ffmpeg_bridge()
+        _prepare_dynamic_plugins()
         from yt_dlp import YoutubeDL
         if __import__("_ytdlpkit_native").is_cancelled(operation_id):
             raise YtdlpKitCancelled("download cancelled")

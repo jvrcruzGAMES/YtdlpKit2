@@ -2,12 +2,15 @@ import CryptoKit
 import Foundation
 
 struct ResolvedPackageArtifact: Sendable {
+    enum Format: Sendable { case wheel, sourceArchive }
     let name: String
     let version: String
     let url: URL
     let sha256: String
     let filename: String
     let source: PackageSource
+    let format: Format
+    let fallbackVersion: String?
 }
 
 private struct PyPIProject: Decodable {
@@ -27,7 +30,8 @@ private struct PyPIProject: Decodable {
 struct PyPIResolver: Sendable {
     let policy: PackageSecurityPolicy
 
-    func resolve(name: String, exactVersion: String? = nil) async throws -> ResolvedPackageArtifact {
+    func resolve(name: String, exactVersion: String? = nil,
+                 allowBundledNativeWheel: Bool = false) async throws -> ResolvedPackageArtifact {
         guard policy.allowPyPI else { throw PackageManagerError.incompatiblePlatform("PyPI is disabled") }
         let normalized = PackageName.normalize(name)
         if let allowed = policy.allowedPackageNames,
@@ -53,19 +57,36 @@ struct PyPIResolver: Sendable {
         }
         // Runtime installation currently accepts universal pure-Python wheels.
         // Platform wheels are considered only through the native registry path.
-        guard let file = files.first(where: {
+        let purePython = files.first(where: {
             !$0.yanked && $0.packagetype == "bdist_wheel"
                 && $0.filename.hasSuffix("-py3-none-any.whl")
         }) ?? files.first(where: {
             !$0.yanked && $0.packagetype == "bdist_wheel"
                 && $0.filename.hasSuffix("-py2.py3-none-any.whl")
-        }) else {
+        })
+        // A package whose executable portion is already signed into the app
+        // still needs its wheel metadata/Python files installed in the managed
+        // package root. The wheel's native members are discarded later and the
+        // bundled frameworks remain the only executable implementation.
+        let bundledNative = allowBundledNativeWheel ? files
+            .filter { !$0.yanked && $0.packagetype == "bdist_wheel" }
+            .sorted { nativeWheelPreference($0.filename) < nativeWheelPreference($1.filename) }
+            .first : nil
+        guard let file = allowBundledNativeWheel ? bundledNative : purePython else {
             throw PackageManagerError.nativeBinaryUnavailable(
                 "No compatible pure-Python wheel for \(project.info.name) \(version)"
             )
         }
         return .init(name: project.info.name, version: version, url: file.url,
-                     sha256: file.digests.sha256, filename: file.filename, source: .pypi)
+                     sha256: file.digests.sha256, filename: file.filename, source: .pypi,
+                     format: .wheel, fallbackVersion: nil)
+    }
+
+    private func nativeWheelPreference(_ filename: String) -> Int {
+        if filename.contains("macosx") && filename.contains("universal2") { return 0 }
+        if filename.contains("macosx") { return 1 }
+        if filename.contains("ios") { return 2 }
+        return 3
     }
 
     func versions(name: String) async throws -> [String] {
@@ -94,6 +115,15 @@ struct PackageArtifactCache: Sendable {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let destination = directory.appending(path: "\(artifact.sha256)-\(artifact.filename)")
         if let existing = try? Data(contentsOf: destination), digest(existing) == artifact.sha256 {
+            return destination
+        }
+        if artifact.url.isFileURL {
+            let data = try Data(contentsOf: artifact.url)
+            defer { try? FileManager.default.removeItem(at: artifact.url) }
+            guard digest(data) == artifact.sha256 else {
+                throw PackageManagerError.hashMismatch(artifact.filename)
+            }
+            try data.write(to: destination, options: .atomic)
             return destination
         }
         let (data, response) = try await URLSession.shared.data(from: artifact.url)

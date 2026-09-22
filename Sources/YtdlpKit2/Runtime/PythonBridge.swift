@@ -43,8 +43,15 @@ struct PythonBridge {
             )) == true else {
                 throw YtdlpKitError.invalidEnvironment("bootstrap validation returned false")
             }
-            for name in ["json", "pathlib", "urllib.parse", "hashlib", "asyncio", "bridge_test"] {
+            for name in ["math", "json", "pathlib", "urllib.parse", "hashlib", "ssl",
+                         "sqlite3", "lzma", "bz2", "asyncio", "sysconfig", "bridge_test"] {
                 _ = try Python.attemptImport(name)
+            }
+            let sysconfig = try Python.attemptImport("sysconfig")
+            guard let scripts = String(try sysconfig.get_path.throwing.dynamicallyCall(
+                withArguments: ["scripts"]
+            )), !scripts.isEmpty else {
+                throw YtdlpKitError.invalidEnvironment("Python sysconfig has no scripts path")
             }
             // Native modules are registered before Py_Initialize and imported
             // here so a missing architecture slice fails during preparation.
@@ -148,9 +155,20 @@ struct PythonBridge {
         try call(module: "package_bridge", function: "inspect_wheel", arguments: [url.path])
     }
 
+    func inspectSourceArchive(_ url: URL, fallbackVersion: String) throws -> String {
+        try call(module: "package_bridge", function: "inspect_source_archive",
+                 arguments: [url.path, fallbackVersion])
+    }
+
     func extractWheel(_ wheel: URL, to destination: URL, stripNative: Bool) throws -> String {
         try call(module: "package_bridge", function: "extract_wheel",
                  arguments: [wheel.path, destination.path, stripNative])
+    }
+
+    func extractSourceArchive(_ archive: URL, to destination: URL,
+                              fallbackVersion: String) throws -> String {
+        try call(module: "package_bridge", function: "extract_source_archive",
+                 arguments: [archive.path, destination.path, fallbackVersion])
     }
 
     func addPackagePath(_ url: URL) throws {
@@ -163,6 +181,10 @@ struct PythonBridge {
 
     func validateImports(_ modules: [String]) throws {
         _ = try call(module: "package_bridge", function: "validate_imports", arguments: [modules])
+    }
+
+    func configureCertificateAuthorities() throws -> String {
+        try call(module: "bootstrap", function: "configure_certificate_authorities", arguments: [])
     }
 
     func parseRequirement(_ requirement: String, environmentJSON: String) throws -> String {

@@ -26,6 +26,16 @@ def run(*args):
 
 def wheel_file(package, platform, artifact):
     url, expected = artifact
+    if url.startswith("built://"):
+        candidates = sorted((ROOT / ".native-build/native-wheels" / platform).glob(
+            f"{package['name'].replace('-', '_')}-{package['version']}-*.whl"
+        ))
+        if len(candidates) != 1:
+            raise SystemExit(
+                f"Expected one source-built {package['name']} wheel for {platform}, "
+                f"found {len(candidates)}"
+            )
+        return candidates[0]
     destination = DOWNLOADS / package["name"] / platform / url.rsplit("/", 1)[-1]
     destination.parent.mkdir(parents=True, exist_ok=True)
     if not destination.exists():
@@ -62,7 +72,7 @@ def copy_python(package, wheel):
             name = info.filename
             if (info.is_dir() or name.endswith((".so", ".dylib", ".pyc"))
                     or ".dist-info/" in name or ".data/" in name
-                    or name.startswith(("bin/", "Scripts/"))):
+                    or name.startswith(("bin/", "Scripts/", "docs/"))):
                 continue
             destination = PYTHON / name
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -180,7 +190,8 @@ def main():
         shutil.rmtree(BUILD)
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
-    for stale in (PYTHON / "cffi", PYTHON / "cryptography", PYTHON / "curl_cffi", PYTHON / "Cryptodome"):
+    for stale in (PYTHON / "cffi", PYTHON / "cryptography", PYTHON / "curl_cffi",
+                  PYTHON / "Cryptodome", PYTHON / "ada_url", PYTHON / "docs"):
         if stale.exists():
             shutil.rmtree(stale)
     for stale in PYTHON.glob("_cffi_backend*"):

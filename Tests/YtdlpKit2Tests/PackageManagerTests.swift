@@ -29,7 +29,8 @@ struct PackageManagerTests {
             ("cffi", "2.0.0"),
             ("cryptography", "48.0.0"),
             ("curl-cffi", "0.16.2"),
-            ("pycryptodomex", "3.21.0"),
+            ("pycryptodomex", "3.23.0"),
+            ("ada-url", "4.0.0"),
         ] {
             #expect(registry.status(name: name, version: version) == .bundledCompatible)
         }

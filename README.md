@@ -18,7 +18,7 @@ print(status.pythonVersion ?? "unavailable")
 
 yt-dlp is not bundled. `prepare()` uses `YtdlpPackageManager` to resolve its
 pinned pure-Python wheel, verify its index-provided SHA-256, transactionally
-install it into a versioned managed root, import it, and check its reported
+install it into the managed `packages/installed` site-packages root, import it, and check its reported
 version. No executable or native code is downloaded.
 
 ```swift
@@ -107,15 +107,22 @@ Scripts/package-python-runtime.sh .native-build/python-apple-support/dist
 Scripts/verify-python-runtime.sh
 ```
 
-The packaged `Native/CPython/Python.xcframework` is detected automatically by
-`Package.swift`. Release archives must contain its macOS, iOS device, and iOS
-simulator slices. Consumers link this prebuilt artifact;
-they do not compile CPython.
+The packaging step copies the complete Python standard library into the runtime
+resource tree. It also converts compiled standard-library modules such as
+`math`, `_ssl`, `_hashlib`, `_socket`, `sqlite3`, `lzma`, and `bz2` into signed
+iOS XCFrameworks under `Native/PythonStdlibExtensions`; macOS continues to use
+the extension modules from its standard-library tree.
+
+`Package.swift` automatically detects both `Native/CPython/Python.xcframework`
+and the generated standard-library extension XCFrameworks. Release archives
+must stage this complete artifact set and include macOS, iOS device, and iOS
+simulator slices. Consumers link the prebuilt artifacts; they do not compile
+CPython.
 
 ## Building native Python packages
 
 The native-package set is Brotli 1.2.0, cffi 2.0.0, cryptography 48.0.0,
-curl-cffi 0.16.2, and pycryptodomex 3.21.0. Their artifacts and checksums are
+curl-cffi 0.16.2, pycryptodomex 3.23.0, and ada-url 4.0.0. Their artifacts and checksums are
 pinned. The build emits a static `_brotli.xcframework`, iOS XCFrameworks for
 each loadable extension, and macOS extension bundles. It does not bundle
 yt-dlp or unrelated pure-Python distributions.
@@ -126,12 +133,16 @@ Scripts/build-native-packages.py --build
 swift test
 ```
 
-The verified wheels for `cffi`, `cryptography`, `curl-cffi`, and
-`pycryptodomex` are converted into per-extension XCFrameworks for iOS device
+The verified or source-verified wheels for `cffi`, `cryptography`, `curl-cffi`,
+`pycryptodomex`, and `ada-url` are converted into per-extension XCFrameworks for iOS device
 and simulator. Their universal binaries are bundled as ordinary CPython
 extension modules on macOS. Pure transitive dependencies such as `pycparser`
-and `certifi` are not bundled; the package manager may install those
-interpreted dependencies at runtime.
+are not bundled; the package manager may install those interpreted dependencies
+at runtime. `certifi` is an explicit pinned runtime-core dependency because
+embedded OpenSSL cannot use the iOS system trust store as a filesystem CA
+bundle. The other pure-Python yt-dlp defaults (`requests`, `urllib3`, `idna`,
+`charset-normalizer`, `mutagen`, and `websockets`) are also pinned and managed
+as runtime-core packages.
 
 ## Testing
 

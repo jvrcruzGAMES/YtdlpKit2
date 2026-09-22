@@ -30,14 +30,14 @@ class FrameworkFinder(importlib.abc.MetaPathFinder):
             relative = Path(*fullname.split("."))
             roots = [Path(item) / relative.parent for item in sys.path if isinstance(item, str)]
         for root in roots:
-            if any((root / f"{leaf}{suffix}").is_file()
-                   for suffix in importlib.machinery.EXTENSION_SUFFIXES):
-                return None
             markers = sorted(root.glob(f"{leaf}*.fwork"))
-            if markers:
+            if markers and sys.platform == "ios":
                 binary = framework_binary(markers[0])
                 loader = importlib.machinery.ExtensionFileLoader(fullname, str(binary))
                 return importlib.util.spec_from_file_location(fullname, binary, loader=loader)
+            if any((root / f"{leaf}{suffix}").is_file()
+                   for suffix in importlib.machinery.EXTENSION_SUFFIXES):
+                return None
         return None
 
 
@@ -56,7 +56,10 @@ def load_extension(fullname):
         binaries = [binary for binary in binaries if binary.is_file()]
         markers = sorted(root.glob(f"{leaf}*.fwork"))
         if binaries or markers:
-            binary = binaries[0] if binaries else framework_binary(markers[0])
+            # A marker represents the signed iOS image. Prefer it over the
+            # colocated macOS .so included for the macOS runtime slice.
+            binary = (framework_binary(markers[0])
+                      if markers and sys.platform == "ios" else binaries[0])
             loader = importlib.machinery.ExtensionFileLoader(fullname, str(binary))
             spec = importlib.util.spec_from_file_location(fullname, binary, loader=loader)
             module = importlib.util.module_from_spec(spec)

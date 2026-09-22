@@ -26,18 +26,46 @@ actor PackageDatabase {
     }
 
     func record(_ package: InstalledPackage) throws {
+        let previous = file
         file.packages[package.normalizedName] = package
-        try persist()
+        do { try persist() }
+        catch {
+            file = previous
+            throw error
+        }
+    }
+
+    func replaceAll(with packages: [InstalledPackage]) throws {
+        let previous = file
+        file.packages = Dictionary(uniqueKeysWithValues: packages.map {
+            ($0.normalizedName, $0)
+        })
+        do { try persist() }
+        catch {
+            file = previous
+            throw error
+        }
     }
 
     func remove(named name: String) throws -> InstalledPackage? {
+        let previous = file
         let removed = file.packages.removeValue(forKey: PackageName.normalize(name))
-        try persist()
+        do { try persist() }
+        catch {
+            file = previous
+            throw error
+        }
         return removed
     }
 
     func reset() throws {
-        file = PackageDatabaseFile(); try persist()
+        let previous = file
+        file = PackageDatabaseFile()
+        do { try persist() }
+        catch {
+            file = previous
+            throw error
+        }
     }
 
     private func persist() throws {
