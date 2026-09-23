@@ -31,23 +31,12 @@ let extensionTargets: [(name: String, path: String)] = bundledExtensions.enumera
     ("YtdlpKit2PyExt\(index)", "Native/PythonExtensions/\(url.lastPathComponent)")
 }
 let stdlibExtensionDirectory = packageDirectory.appendingPathComponent("Native/PythonStdlibExtensions")
-let discoveredStdlibExtensions = ((try? FileManager.default.contentsOfDirectory(
+let bundledStdlibExtensions = ((try? FileManager.default.contentsOfDirectory(
     at: stdlibExtensionDirectory, includingPropertiesForKeys: nil
-)) ?? []).filter { $0.pathExtension == "xcframework" }.sorted { $0.lastPathComponent < $1.lastPathComponent }
-let knownStdlibExtensionNames = [
-    "_asyncio", "_bisect", "_blake2", "_bz2", "_codecs_cn", "_codecs_hk",
-    "_codecs_iso2022", "_codecs_jp", "_codecs_kr", "_codecs_tw", "_csv",
-    "_ctypes", "_dbm", "_decimal", "_elementtree", "_hashlib", "_heapq",
-    "_hmac", "_interpchannels", "_interpqueues", "_interpreters", "_json",
-    "_lsprof", "_lzma", "_md5", "_multibytecodec", "_pickle", "_queue",
-    "_random", "_remote_debugging", "_sha1", "_sha2", "_sha3", "_socket",
-    "_sqlite3", "_ssl", "_statistics", "_struct", "_uuid", "_zoneinfo",
-    "_zstd", "array", "binascii", "cmath", "fcntl", "math", "mmap",
-    "pyexpat", "resource", "select", "termios", "unicodedata", "zlib",
-]
-let bundledStdlibExtensions = discoveredStdlibExtensions.isEmpty
-    ? knownStdlibExtensionNames.map { stdlibExtensionDirectory.appendingPathComponent("\($0).xcframework") }
-    : discoveredStdlibExtensions
+)) ?? []).filter {
+    $0.pathExtension == "xcframework"
+        && FileManager.default.fileExists(atPath: $0.appendingPathComponent("Info.plist").path)
+}.sorted { $0.lastPathComponent < $1.lastPathComponent }
 let stdlibExtensionTargets: [(name: String, path: String)] = bundledStdlibExtensions.enumerated().map { index, url in
     ("YtdlpKit2PyStdlib\(index)", "Native/PythonStdlibExtensions/\(url.lastPathComponent)")
 }
