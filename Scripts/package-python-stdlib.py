@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Package CPython's iOS standard-library extensions as signed frameworks."""
+"""Package CPython's native standard-library extensions as signed frameworks."""
 
+import os
 import pathlib
 import plistlib
 import shutil
+import struct
 import subprocess
 import sys
 
@@ -13,6 +15,13 @@ OUTPUT = ROOT / "Native/PythonStdlibExtensions"
 STAGE = ROOT / ".native-build/python-stdlib-frameworks"
 EXCLUDED_PREFIXES = ("_test", "xx")
 EXCLUDED = {"_ctypes_test", "_xxtestfuzz"}
+PRIVACY_MANIFEST_MODULES = {"_hashlib", "_ssl"}
+PRIVACY_MANIFEST = {
+    "NSPrivacyTracking": False,
+    "NSPrivacyCollectedDataTypes": [],
+    "NSPrivacyAccessedAPITypes": [],
+}
+SIGNING_IDENTITY_ENV = "YTDLPKIT_XCFRAMEWORK_SIGN_IDENTITY"
 
 
 def run(*command):
@@ -28,12 +37,59 @@ def modules(directory):
     return {module_name(item): item for item in directory.glob("*.so")}
 
 
+def write_privacy_manifest(framework_path):
+    with (framework_path / "PrivacyInfo.xcprivacy").open("wb") as output:
+        plistlib.dump(PRIVACY_MANIFEST, output)
+
+
+def sign_xcframework(path):
+    identity = os.environ.get(SIGNING_IDENTITY_ENV)
+    if not identity:
+        raise SystemExit(
+            f"{path.name} contains BoringSSL/OpenSSL code and must be signed. "
+            f"Set {SIGNING_IDENTITY_ENV} to your Apple Distribution signing identity."
+        )
+    run("codesign", "--timestamp", "--force", "--sign", identity, path)
+    run("codesign", "--verify", "--verbose", path)
+
+
+def normalize_framework_binary(path, install_name):
+    """Turn loadable bundles into framework dylibs, including an LC_ID_DYLIB."""
+    data = bytearray(path.read_bytes())
+    offsets = [0]
+    if data[:4] in (b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"):
+        is_64 = data[:4] == b"\xca\xfe\xba\xbf"
+        count = struct.unpack_from(">I", data, 4)[0]
+        size = 32 if is_64 else 20
+        offsets = [struct.unpack_from(">Q" if is_64 else ">I", data, 8 + size * i + 8)[0]
+                   for i in range(count)]
+    for offset in offsets:
+        filetype = struct.unpack_from("<I", data, offset + 12)[0]
+        if filetype == 8:  # MH_BUNDLE
+            ncmds, sizeofcmds = struct.unpack_from("<II", data, offset + 16)
+            encoded = install_name.encode() + b"\0"
+            cmdsize = (24 + len(encoded) + 7) & ~7
+            command_offset = offset + 32 + sizeofcmds
+            if any(data[command_offset:command_offset + cmdsize]):
+                raise SystemExit(f"No Mach-O header padding for LC_ID_DYLIB in {path}")
+            struct.pack_into("<IIIIII", data, command_offset,
+                             0xD, cmdsize, 24, 0, 0, 0)
+            data[command_offset + 24:command_offset + 24 + len(encoded)] = encoded
+            struct.pack_into("<II", data, offset + 16, ncmds + 1, sizeofcmds + cmdsize)
+            struct.pack_into("<I", data, offset + 12, 6)  # MH_DYLIB
+        elif filetype != 6:
+            raise SystemExit(f"Unexpected Mach-O file type {filetype} in {path}")
+    path.write_bytes(data)
+
+
 def framework(module, executable, binary, platform):
     destination = STAGE / module / platform / f"{executable}.framework"
     destination.mkdir(parents=True, exist_ok=True)
     installed = destination / executable
     shutil.copy2(binary, installed)
-    run("install_name_tool", "-id", f"@rpath/{executable}.framework/{executable}", installed)
+    install_name = f"@rpath/{executable}.framework/{executable}"
+    normalize_framework_binary(installed, install_name)
+    run("install_name_tool", "-id", install_name, installed)
     with (destination / "Info.plist").open("wb") as output:
         plistlib.dump({
             "CFBundleDevelopmentRegion": "en",
@@ -46,6 +102,8 @@ def framework(module, executable, binary, platform):
             "CFBundleVersion": "1",
             "MinimumOSVersion": "16.0",
         }, output)
+    if module in PRIVACY_MANIFEST_MODULES:
+        write_privacy_manifest(destination)
     return destination
 
 
@@ -94,6 +152,9 @@ def main():
     for name, source in discovered.items():
         shutil.copy2(source, python_home / "lib/python3.14" / name)
 
+    for config_dir in (python_home / "lib/python3.14").glob("config-*"):
+        shutil.rmtree(config_dir)
+
     for module in selected:
         executable = f"PythonStdlib_{module}"
         simulator = STAGE / module / "simulator" / executable
@@ -106,8 +167,22 @@ def main():
             "-framework", device_framework,
             "-framework", simulator_framework,
             "-output", destination)
+        if module in PRIVACY_MANIFEST_MODULES:
+            sign_xcframework(destination)
         marker = dynload / f"{module}.cpython-314-apple.fwork"
         marker.write_text(f"Frameworks/{executable}.framework/{executable}\n")
+
+    # SwiftPM resources must contain data only. Any Mach-O image below the
+    # resource bundle is rejected by App Store validation, even when it is a
+    # valid CPython extension. The corresponding modules now live in signed
+    # frameworks and are represented here by .fwork marker files.
+    for binary in dynload.glob("*.so"):
+        binary.unlink()
+    for binary in dynload.glob("*.dylib"):
+        binary.unlink()
+    for pattern in ("*.o", "*.a"):
+        for binary in python_home.rglob(pattern):
+            binary.unlink()
 
     print(f"Packaged {len(selected)} CPython standard-library extension frameworks")
 

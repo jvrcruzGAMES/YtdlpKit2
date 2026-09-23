@@ -102,16 +102,21 @@ The maintained runtime is CPython 3.14 (`cp314`). The build wrapper uses the
 BeeWare Python Apple Support cross-build, which produces real Apple SDK slices:
 
 ```sh
+export YTDLPKIT_XCFRAMEWORK_SIGN_IDENTITY="Apple Distribution: Example, Inc. (TEAMID1234)"
 Scripts/build-python.sh
 Scripts/package-python-runtime.sh .native-build/python-apple-support/dist
 Scripts/verify-python-runtime.sh
 ```
 
+The signing identity is required for standard-library XCFrameworks that include
+OpenSSL/BoringSSL code, such as `_ssl` and `_hashlib`. Those XCFrameworks also
+receive `PrivacyInfo.xcprivacy` manifests during packaging.
+
 The packaging step copies the complete Python standard library into the runtime
 resource tree. It also converts compiled standard-library modules such as
 `math`, `_ssl`, `_hashlib`, `_socket`, `sqlite3`, `lzma`, and `bz2` into signed
-iOS XCFrameworks under `Native/PythonStdlibExtensions`; macOS continues to use
-the extension modules from its standard-library tree.
+iOS XCFrameworks under `Native/PythonStdlibExtensions`; no Mach-O binaries
+remain in the resource bundle.
 
 `Package.swift` automatically detects both `Native/CPython/Python.xcframework`
 and the generated standard-library extension XCFrameworks. Release archives
@@ -135,8 +140,7 @@ swift test
 
 The verified or source-verified wheels for `cffi`, `cryptography`, `curl-cffi`,
 `pycryptodomex`, and `ada-url` are converted into per-extension XCFrameworks for iOS device
-and simulator. Their universal binaries are bundled as ordinary CPython
-extension modules on macOS. Pure transitive dependencies such as `pycparser`
+and simulator. Pure transitive dependencies such as `pycparser`
 are not bundled; the package manager may install those interpreted dependencies
 at runtime. `certifi` is an explicit pinned runtime-core dependency because
 embedded OpenSSL cannot use the iOS system trust store as a filesystem CA

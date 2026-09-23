@@ -33,12 +33,8 @@ public actor YtdlpPackageManager {
     private func performPreparation() async throws {
         let (environment, database, runtime) = try await context()
         try await migrateToSharedSitePackages(environment: environment, database: database)
-        for package in await database.all() {
-            guard FileManager.default.fileExists(atPath: package.installLocation.path) else {
-                throw PackageManagerError.installationFailed(
-                    "Managed package files are missing: \(package.normalizedName)"
-                )
-            }
+        for package in await database.all() where packageFilesAreMissing(package) {
+            try await reinstallMissingPackage(package)
         }
         let sitePackages = environment.packagesDirectory.appending(path: "installed")
         if FileManager.default.fileExists(atPath: sitePackages.path) {
@@ -86,6 +82,36 @@ public actor YtdlpPackageManager {
         await runtime.setLoadedYtdlpVersion(loadedVersion)
         _ = environment
         prepared = true
+    }
+
+    private func packageFilesAreMissing(_ package: InstalledPackage) -> Bool {
+        guard FileManager.default.fileExists(atPath: package.installLocation.path) else {
+            return true
+        }
+        return package.files.contains { relativePath in
+            !FileManager.default.fileExists(
+                atPath: package.installLocation.appending(path: relativePath).path
+            )
+        }
+    }
+
+    private func reinstallMissingPackage(_ package: InstalledPackage) async throws {
+        switch package.source {
+        case .pypi:
+            _ = try await installPyPI(
+                name: package.name,
+                version: package.version,
+                source: .pypi,
+                role: package.role,
+                resolveDependencies: false
+            )
+        case let .git(url, revision):
+            _ = try await installGitHub(url: url, revision: revision, role: package.role)
+        case .bundled, .local:
+            throw PackageManagerError.installationFailed(
+                "Managed package files are missing and cannot be restored automatically: \(package.normalizedName)"
+            )
+        }
     }
 
     /// Resolves, verifies, stages, validates, and atomically commits a package.
@@ -464,9 +490,17 @@ public actor YtdlpPackageManager {
                     "Managed package files are missing: \(package.normalizedName)"
                 )
             }
-            let availableFiles = sourceRoot.standardizedFileURL == installedRoot
-                ? package.files
-                : try regularFiles(under: sourceRoot)
+            // Newer databases contain authoritative, package-specific ownership.
+            // Use it even when the recorded root is stale: multiple packages may
+            // legitimately point at the same legacy site-packages directory, and
+            // scanning that whole directory once per package makes every package
+            // appear to own every dependency.
+            let recordedFiles = package.files.filter {
+                FileManager.default.fileExists(atPath: sourceRoot.appending(path: $0).path)
+            }
+            let availableFiles = recordedFiles.isEmpty
+                ? try regularFiles(under: sourceRoot)
+                : recordedFiles
             let selected = package.nativeKind == .bundledNative
                 ? availableFiles.filter { $0.contains(".dist-info/") }
                 : availableFiles
@@ -474,11 +508,10 @@ public actor YtdlpPackageManager {
             for file in selected {
                 let source = sourceRoot.appending(path: file)
                 guard FileManager.default.fileExists(atPath: source.path) else { continue }
-                guard claimed.insert(file).inserted else {
-                    throw PackageManagerError.dependencyConflict(
-                        "Legacy packages both own \(file); migration cannot overwrite either"
-                    )
-                }
+                // Some early databases assigned a shared metadata file to more
+                // than one distribution. Copy it once and give ownership to the
+                // first deterministic package instead of failing the migration.
+                guard claimed.insert(file).inserted else { continue }
                 let destination = candidate.appending(path: file)
                 try FileManager.default.createDirectory(
                     at: destination.deletingLastPathComponent(), withIntermediateDirectories: true

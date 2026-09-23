@@ -23,6 +23,34 @@ if [ ! -f "$python_home/lib-dynload/math.cpython-314-apple.fwork" ] || \
     exit 1
 fi
 
+if find "$python_home" -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.bundle' \
+    -o -name '*.o' -o -name '*.a' \) \
+    | grep -q .; then
+    echo "Standalone native binaries found in Python resource bundle" >&2
+    find "$python_home" -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.bundle' \
+        -o -name '*.o' -o -name '*.a' \) >&2
+    exit 1
+fi
+
+if find "$python_home" -type l | grep -q .; then
+    echo "Symbolic links found in Python resource bundle" >&2
+    find "$python_home" -type l -print >&2
+    exit 1
+fi
+
+for sdk in _hashlib _ssl
+do
+    framework_name="PythonStdlib_${sdk}"
+    if ! find "$stdlib_frameworks/$sdk.xcframework" -path "*/$framework_name.framework/PrivacyInfo.xcprivacy" | grep -q .; then
+        echo "Missing privacy manifest in $sdk standard-library XCFramework" >&2
+        exit 1
+    fi
+    if ! codesign --verify --verbose "$stdlib_frameworks/$sdk.xcframework" >/dev/null 2>&1; then
+        echo "Missing or invalid XCFramework signature for $sdk standard-library XCFramework" >&2
+        exit 1
+    fi
+done
+
 for sysconfig in \
     _sysconfigdata__ios_arm64-iphoneos.py \
     _sysconfigdata__ios_arm64-iphonesimulator.py \

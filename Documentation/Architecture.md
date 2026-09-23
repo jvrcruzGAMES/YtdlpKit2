@@ -50,8 +50,8 @@ conditionally includes the local artifacts so source-only foundation builds
 remain possible, but `prepare()` never claims readiness without the signed
 runtime. Release automation must stage the interpreter, runtime resource tree,
 and `Native/PythonStdlibExtensions` before archiving the package. CPython's
-compiled standard-library modules are signed frameworks on iOS and ordinary
-extension modules on macOS. The runtime manifest's major/minor version must
+compiled standard-library modules are signed iOS frameworks; resource bundles
+contain only Python/data files and framework markers. The runtime manifest's major/minor version must
 match the interpreter.
 
 yt-dlp is not a package resource. `YtdlpPackageManager` downloads its pinned

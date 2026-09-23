@@ -6,6 +6,7 @@ import json
 import pathlib
 import plistlib
 import shutil
+import struct
 import subprocess
 import urllib.request
 import zipfile
@@ -79,15 +80,45 @@ def copy_python(package, wheel):
             destination.write_bytes(archive.read(info))
 
 
+def normalize_framework_binary(path, install_name):
+    """Turn loadable bundles into framework dylibs, including an LC_ID_DYLIB."""
+    data = bytearray(path.read_bytes())
+    offsets = [0]
+    if data[:4] in (b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"):
+        is_64 = data[:4] == b"\xca\xfe\xba\xbf"
+        count = struct.unpack_from(">I", data, 4)[0]
+        size = 32 if is_64 else 20
+        offsets = [struct.unpack_from(">Q" if is_64 else ">I", data, 8 + size * i + 8)[0]
+                   for i in range(count)]
+    for offset in offsets:
+        filetype = struct.unpack_from("<I", data, offset + 12)[0]
+        if filetype == 8:  # MH_BUNDLE
+            ncmds, sizeofcmds = struct.unpack_from("<II", data, offset + 16)
+            encoded = install_name.encode() + b"\0"
+            cmdsize = (24 + len(encoded) + 7) & ~7
+            command_offset = offset + 32 + sizeofcmds
+            if any(data[command_offset:command_offset + cmdsize]):
+                raise SystemExit(f"No Mach-O header padding for LC_ID_DYLIB in {path}")
+            struct.pack_into("<IIIIII", data, command_offset,
+                             0xD, cmdsize, 24, 0, 0, 0)
+            data[command_offset + 24:command_offset + 24 + len(encoded)] = encoded
+            struct.pack_into("<II", data, offset + 16, ncmds + 1, sizeofcmds + cmdsize)
+            struct.pack_into("<I", data, offset + 12, 6)  # MH_DYLIB
+        elif filetype != 6:
+            raise SystemExit(f"Unexpected Mach-O file type {filetype} in {path}")
+    path.write_bytes(data)
+
+
 def framework(module, binary, marker, platform):
     directory = STAGE / module / platform / f"{module}.framework"
     directory.mkdir(parents=True, exist_ok=True)
     installed_binary = directory / module
     shutil.copy2(binary, installed_binary)
+    install_name = f"@rpath/{module}.framework/{module}"
+    normalize_framework_binary(installed_binary, install_name)
     # Wheels use extension-module paths as LC_ID_DYLIB. Once wrapped as a
     # framework, give the image the install name that Apple's loader expects.
-    run("install_name_tool", "-id", f"@rpath/{module}.framework/{module}",
-        installed_binary)
+    run("install_name_tool", "-id", install_name, installed_binary)
     with (directory / "Info.plist").open("wb") as output:
         plistlib.dump({
             "CFBundleDevelopmentRegion": "en",
@@ -123,11 +154,7 @@ def process_package(package, wheels):
             binary = EXTRACTED / package["name"] / platform / module
             extract_member(wheel, member, binary)
             binaries[platform] = binary
-            if not platform.startswith("macos"):
-                markers[platform] = member[:-3] + ".fwork"
-                marker = PYTHON / markers[platform]
-                marker.parent.mkdir(parents=True, exist_ok=True)
-                marker.write_text(f"Frameworks/{module}.framework/{module}\n")
+            markers[platform] = member[:-3] + ".fwork"
 
         mac_platform = "macos-universal2" if "macos-universal2" in binaries else "macos-arm64"
         macos = binaries.get("macos-universal2")
@@ -136,9 +163,9 @@ def process_package(package, wheels):
             macos.parent.mkdir(parents=True, exist_ok=True)
             run("lipo", "-create", binaries["macos-arm64"], binaries["macos-x86_64"],
                 "-output", macos)
-        installed = PYTHON / members[mac_platform][module]
-        installed.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(macos, installed)
+        marker = PYTHON / markers[mac_platform]
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(f"Frameworks/{module}.framework/{module}\n")
 
         simulator = BUILD / "fat" / module / "ios-simulator"
         simulator.parent.mkdir(parents=True, exist_ok=True)

@@ -56,8 +56,6 @@ def load_extension(fullname):
         binaries = [binary for binary in binaries if binary.is_file()]
         markers = sorted(root.glob(f"{leaf}*.fwork"))
         if binaries or markers:
-            # A marker represents the signed iOS image. Prefer it over the
-            # colocated macOS .so included for the macOS runtime slice.
             binary = (framework_binary(markers[0])
                       if markers and sys.platform == "ios" else binaries[0])
             loader = importlib.machinery.ExtensionFileLoader(fullname, str(binary))
