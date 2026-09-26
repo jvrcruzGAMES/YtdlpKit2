@@ -5,7 +5,9 @@ import json
 import os
 import pathlib
 import shutil
+import sys
 import tarfile
+import tempfile
 import tomllib
 import zipfile
 
@@ -14,10 +16,110 @@ from ytdlp_serialization import dumps
 NATIVE_SUFFIXES = (".so", ".dylib", ".bundle", ".pyd", ".dll")
 
 
+def _safe_extract_archive(archive_path, destination):
+    root = pathlib.Path(destination).resolve()
+    with tarfile.open(archive_path, "r:*") as archive:
+        for member in archive.getmembers():
+            target = (root / member.name).resolve()
+            if target != root and root not in target.parents:
+                raise ValueError(f"unsafe source member: {member.name}")
+        archive.extractall(root, filter="data")
+
+
+def inspect_build_system(path):
+    """Return the PEP 517 environment needed to turn a Git checkout into a wheel."""
+    try:
+        with tarfile.open(path, "r:*") as archive:
+            files = [m for m in archive.getmembers() if m.isfile()]
+            roots = {m.name.split("/", 1)[0] for m in files if "/" in m.name}
+            if len(roots) != 1:
+                raise ValueError("Git package archive must have one project root")
+            root = next(iter(roots))
+            native = [m.name for m in files if m.name.lower().endswith(NATIVE_SUFFIXES)]
+            pyproject_name = f"{root}/pyproject.toml"
+            pyproject = next((m for m in files if m.name == pyproject_name), None)
+            document = {}
+            if pyproject is not None:
+                stream = archive.extractfile(pyproject)
+                if stream is None:
+                    raise ValueError("Git package pyproject.toml is unreadable")
+                document = tomllib.loads(stream.read().decode("utf-8"))
+            build = document.get("build-system")
+            if build is None:
+                requires = ["setuptools>=40.8.0"]
+                backend = "setuptools.build_meta:__legacy__"
+                backend_path = []
+            else:
+                requires = build.get("requires")
+                backend = build.get("build-backend")
+                backend_path = build.get("backend-path", [])
+                if not isinstance(requires, list) or not all(isinstance(x, str) for x in requires):
+                    raise ValueError("build-system.requires must be an array of strings")
+                if not isinstance(backend, str) or not backend:
+                    raise ValueError("build-system.build-backend is required")
+                if not isinstance(backend_path, list) or not all(isinstance(x, str) for x in backend_path):
+                    raise ValueError("build-system.backend-path must be an array of strings")
+            return dumps({"ok": True, "requires": requires, "backend": backend,
+                          "backendPath": backend_path, "nativeFiles": native})
+    except Exception as exc:
+        return dumps({"ok": False, "error": str(exc)})
+
+
+def build_source_wheel(path, destination, backend, backend_path):
+    """Run the PEP 517 build_wheel hook in-process (iOS cannot spawn pip)."""
+    try:
+        output = pathlib.Path(destination).resolve()
+        if output.exists(): shutil.rmtree(output)
+        output.mkdir(parents=True)
+        with tempfile.TemporaryDirectory(prefix="ytdlpkit-build-") as temporary:
+            _safe_extract_archive(path, temporary)
+            children = list(pathlib.Path(temporary).iterdir())
+            if len(children) != 1 or not children[0].is_dir():
+                raise ValueError("Git package archive must have one project root")
+            source = children[0].resolve()
+            search = []
+            for relative in backend_path:
+                candidate = (source / relative).resolve()
+                if candidate != source and source not in candidate.parents:
+                    raise ValueError(f"unsafe build-system.backend-path: {relative}")
+                search.append(str(candidate))
+            module_name, separator, object_path = backend.partition(":")
+            old_path, old_cwd = list(sys.path), os.getcwd()
+            try:
+                sys.path[:0] = search
+                os.chdir(source)
+                module = __import__(module_name, fromlist=["*"])
+                hook = module
+                if separator:
+                    for component in object_path.split("."):
+                        hook = getattr(hook, component)
+                filename = hook.build_wheel(str(output), config_settings=None, metadata_directory=None)
+            finally:
+                os.chdir(old_cwd)
+                sys.path[:] = old_path
+            wheel = (output / filename).resolve()
+            if output not in wheel.parents or not wheel.is_file() or wheel.suffix != ".whl":
+                raise ValueError("PEP 517 backend returned an invalid wheel filename")
+            return dumps({"ok": True, "path": str(wheel)})
+    except Exception as exc:
+        return dumps({"ok": False, "error": str(exc)})
+
+
 def _dist_info(names):
-    candidates = sorted({n.split("/", 1)[0] for n in names if ".dist-info/" in n})
+    # A wheel's authoritative metadata directory lives at its root. Packages
+    # may legitimately vendor another distribution (including its dist-info)
+    # below a package directory; treating every nested ".dist-info/" match as
+    # wheel metadata makes those otherwise valid wheels appear ambiguous.
+    candidates = sorted({
+        pathlib.PurePosixPath(name).parts[0]
+        for name in names
+        if pathlib.PurePosixPath(name).parts
+        and pathlib.PurePosixPath(name).parts[0].endswith(".dist-info")
+    })
     if len(candidates) != 1:
-        raise ValueError("wheel must contain exactly one .dist-info directory")
+        found = ", ".join(candidates) if candidates else "none"
+        raise ValueError(
+            f"wheel must contain exactly one top-level .dist-info directory (found: {found})")
     return candidates[0]
 
 

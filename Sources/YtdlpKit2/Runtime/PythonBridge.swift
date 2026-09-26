@@ -160,6 +160,16 @@ struct PythonBridge {
                  arguments: [url.path, fallbackVersion])
     }
 
+    func inspectBuildSystem(_ url: URL) throws -> String {
+        try call(module: "package_bridge", function: "inspect_build_system", arguments: [url.path])
+    }
+
+    func buildSourceWheel(_ archive: URL, to destination: URL, backend: String,
+                          backendPath: [String]) throws -> String {
+        try call(module: "package_bridge", function: "build_source_wheel",
+                 arguments: [archive.path, destination.path, backend, backendPath])
+    }
+
     func extractWheel(_ wheel: URL, to destination: URL, stripNative: Bool) throws -> String {
         try call(module: "package_bridge", function: "extract_wheel",
                  arguments: [wheel.path, destination.path, stripNative])

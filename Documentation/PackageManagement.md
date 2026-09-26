@@ -26,7 +26,11 @@ declares Brotli, pycryptodomex, CFFI, cryptography, curl-cffi, and ada-url as
 native packages whose signed framework artifacts must be staged.
 
 Pure-Python PyPI and GitHub packages recursively install applicable
-`Requires-Dist` dependencies. GitHub requirements are resolved to immutable
+`Requires-Dist` dependencies. GitHub sources are built through their declared
+PEP 517 backend (including managed installation of `build-system.requires`),
+then inspected and installed from the resulting wheel just like a PyPI wheel.
+Sources containing native binaries and builds that produce a non-pure wheel
+are rejected. GitHub requirements are resolved to immutable
 commits, SHA-256 verified, and accepted only when a source archive has static
 PEP 621 metadata and contains no native code. Runtime compilation and arbitrary
 PEP 517 build backends remain unsupported on iOS.

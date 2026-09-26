@@ -303,16 +303,30 @@ public actor YtdlpPackageManager {
         try Task.checkCancellation()
         let (environment, database, runtime) = try await context()
         let cache = PackageArtifactCache(directory: environment.cacheDirectory.appending(path: "packages"))
-        let wheel = try await cache.download(artifact)
-        let inspection: WheelInspection
+        let downloadedArtifact = try await cache.download(artifact)
+        let wheel: URL
         switch artifact.format {
         case .wheel:
-            inspection = try await runtime.inspectWheel(wheel)
+            wheel = downloadedArtifact
         case .sourceArchive:
-            inspection = try await runtime.inspectSourceArchive(
-                wheel, fallbackVersion: artifact.fallbackVersion ?? artifact.version
+            let buildSystem = try await runtime.inspectBuildSystem(downloadedArtifact)
+            guard buildSystem.nativeFiles.isEmpty else {
+                throw PackageManagerError.nativeBinaryUnavailable(artifact.name)
+            }
+            // Like uv, satisfy the declared PEP 517 build environment before
+            // invoking the backend. These distributions remain managed and
+            // reusable because an embedded iOS runtime cannot spawn an
+            // isolated Python/pip subprocess.
+            for requirement in buildSystem.requires {
+                _ = try await installPEP508(requirement, role: .ytdlpDependency)
+            }
+            let buildDirectory = environment.cacheDirectory.appending(path: "built-wheels")
+                .appending(path: artifact.sha256)
+            wheel = try await runtime.buildSourceWheel(
+                downloadedArtifact, to: buildDirectory, buildSystem: buildSystem
             )
         }
+        let inspection = try await runtime.inspectWheel(wheel)
         guard artifact.format == .sourceArchive ||
                 (PackageName.normalize(inspection.metadata.name) == PackageName.normalize(artifact.name)
                  && inspection.metadata.version == artifact.version) else {
@@ -356,6 +370,13 @@ public actor YtdlpPackageManager {
 
         let nativeRegistry = try NativePackageRegistry.bundled()
         let hasNative = !inspection.nativeFiles.isEmpty || !inspection.rootIsPurelib
+        if case .sourceArchive = artifact.format {
+            guard !hasNative else {
+                throw PackageManagerError.nativeBinaryUnavailable(
+                    "Git package built a non-pure wheel: \(inspection.metadata.name)"
+                )
+            }
+        }
         let nativeModules = nativeRegistry.descriptor(for: inspection.metadata.name)?.modules ?? []
         let nativeStatus: NativePackageStatus
         if hasNative {
@@ -386,18 +407,7 @@ public actor YtdlpPackageManager {
         try FileManager.default.createDirectory(at: transaction, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: transaction) }
         var files: [String]
-        switch artifact.format {
-        case .wheel:
-            files = try await runtime.extractWheel(wheel, to: staged, stripNative: hasNative)
-        case .sourceArchive:
-            guard !hasNative else {
-                throw PackageManagerError.nativeBinaryUnavailable(inspection.metadata.name)
-            }
-            files = try await runtime.extractSourceArchive(
-                wheel, to: staged,
-                fallbackVersion: artifact.fallbackVersion ?? artifact.version
-            )
-        }
+        files = try await runtime.extractWheel(wheel, to: staged, stripNative: hasNative)
         if hasNative {
             files = try removeBundledNativeModules(
                 nativeModules, files: files, from: staged

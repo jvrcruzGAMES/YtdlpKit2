@@ -136,6 +136,20 @@ public actor PythonRuntime {
         }
     }
 
+    func inspectBuildSystem(_ url: URL) throws -> SourceBuildSystem {
+        try withGIL { try WheelInspector.decodeBuildSystem(PythonBridge().inspectBuildSystem(url)) }
+    }
+
+    func buildSourceWheel(_ archive: URL, to destination: URL,
+                          buildSystem: SourceBuildSystem) throws -> URL {
+        try withGIL {
+            try WheelInspector.decodeBuiltWheel(PythonBridge().buildSourceWheel(
+                archive, to: destination, backend: buildSystem.backend,
+                backendPath: buildSystem.backendPath
+            ))
+        }
+    }
+
     func extractWheel(_ wheel: URL, to destination: URL, stripNative: Bool) throws -> [String] {
         try withGIL {
             try WheelInspector.decodeExtraction(
