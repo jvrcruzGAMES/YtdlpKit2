@@ -22,7 +22,7 @@ Downloaded wheel members ending in `.so`, `.dylib`, `.bundle`, `.pyd`, or
 the default `bundledOnly` policy, installation succeeds only when
 `native-packages.json` matches distribution version and `cp314`; downloaded
 binaries are then omitted during extraction. The current manifest intentionally
-declares Brotli, pycryptodomex, CFFI, cryptography, curl-cffi, and ada-url as
+declares Brotli, pycryptodomex, CFFI, cryptography, and curl-cffi as
 native packages whose signed framework artifacts must be staged.
 
 Pure-Python PyPI and GitHub packages recursively install applicable

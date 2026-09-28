@@ -135,11 +135,14 @@ struct RuntimeBootstrap {
         var paths = Bundle.allFrameworks.map { $0.bundleURL.deletingLastPathComponent().path }
         if let frameworks = Bundle.main.privateFrameworksURL { paths.append(frameworks.path) }
         var ancestor = Bundle.module.bundleURL
-        for _ in 0..<6 {
+        for _ in 0..<10 {
             ancestor.deleteLastPathComponent()
             paths.append(ancestor.path)
             paths.append(ancestor.appending(path: "Frameworks").path)
+            paths.append(ancestor.appending(path: "Native/PythonExtensions").path)
+            paths.append(ancestor.appending(path: "Native/PythonStdlibExtensions").path)
+            paths.append(ancestor.appending(path: "Native/CPython").path)
         }
-        return Array(Set(paths)).sorted()
+        return Array(Set(paths.filter { FileManager.default.fileExists(atPath: $0) })).sorted()
     }
 }

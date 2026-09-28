@@ -37,15 +37,6 @@
         "ios-simulator-x86_64": ["https://pypi.flet.dev/-/ver_1RWle8/pycryptodomex-3.23.0-2-cp314-cp314-ios_13_0_x86_64_iphonesimulator.whl", "6f862fc22277c4beda53a5866bf0a788c4e82e5bd0161d41bb81c2ab1cff7ec4"],
         "macos-universal2": ["https://files.pythonhosted.org/packages/dd/9c/1a8f35daa39784ed8adf93a694e7e5dc15c23c741bbda06e1d45f8979e9e/pycryptodomex-3.23.0-cp37-abi3-macosx_10_9_universal2.whl", "06698f957fe1ab229a99ba2defeeae1c09af185baa909a31a5d1f9d42b1aaed6"]
       }
-    },
-    {
-      "name": "ada-url", "version": "4.0.0", "imports": ["ada_url"],
-      "wheels": {
-        "ios-arm64": ["built://ada-url/ios-arm64", "source-verified"],
-        "ios-simulator-arm64": ["built://ada-url/ios-simulator-arm64", "source-verified"],
-        "ios-simulator-x86_64": ["built://ada-url/ios-simulator-x86_64", "source-verified"],
-        "macos-universal2": ["https://files.pythonhosted.org/packages/87/78/74c5cd93ca51841cbd78af1cb4b1b3cd2c09a9d7915138c402491f25219c/ada_url-4.0.0-cp314-cp314-macosx_10_15_universal2.whl", "39f4bd73f700a69c5b8a90e961ef941a6a746a0702267626d1c963d375bb9262"]
-      }
     }
   ]
 }

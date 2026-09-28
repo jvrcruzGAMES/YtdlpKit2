@@ -60,7 +60,6 @@ def validate_native_packages():
     native_frameworks.load_extension("cryptography.hazmat.bindings._rust")
     curl_wrapper = native_frameworks.load_extension("curl_cffi._wrapper")
 
-    from ada_url import URL
     from Cryptodome.Cipher import AES
     key = b"YtdlpKit2-key-16"
     plaintext = b"native-test-data"
@@ -68,5 +67,4 @@ def validate_native_packages():
     if AES.new(key, AES.MODE_ECB).decrypt(encrypted) != plaintext:
         return False
     return (hasattr(_cffi_backend, "FFI")
-            and hasattr(curl_wrapper, "lib")
-            and URL("https://example.com/a/../b").pathname == "/b")
+            and hasattr(curl_wrapper, "lib"))

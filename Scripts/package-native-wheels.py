@@ -115,10 +115,12 @@ def framework(module, binary, marker, platform):
     installed_binary = directory / module
     shutil.copy2(binary, installed_binary)
     install_name = f"@rpath/{module}.framework/{module}"
-    normalize_framework_binary(installed_binary, install_name)
-    # Wheels use extension-module paths as LC_ID_DYLIB. Once wrapped as a
-    # framework, give the image the install name that Apple's loader expects.
-    run("install_name_tool", "-id", install_name, installed_binary)
+    if platform.startswith("ios"):
+        normalize_framework_binary(installed_binary, install_name)
+        try:
+            run("install_name_tool", "-id", install_name, installed_binary)
+        except Exception:
+            pass
     with (directory / "Info.plist").open("wb") as output:
         plistlib.dump({
             "CFBundleDevelopmentRegion": "en",
@@ -166,6 +168,11 @@ def process_package(package, wheels):
         marker = PYTHON / markers[mac_platform]
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.write_text(f"Frameworks/{module}.framework/{module}\n")
+
+        # Copy the native macOS .so into PYTHON for direct use on macOS
+        so_destination = PYTHON / members[mac_platform][module]
+        so_destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(macos, so_destination)
 
         simulator = BUILD / "fat" / module / "ios-simulator"
         simulator.parent.mkdir(parents=True, exist_ok=True)

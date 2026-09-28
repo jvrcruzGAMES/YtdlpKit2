@@ -262,28 +262,26 @@ struct EmbeddedRuntimeTests {
             atPath: installed.installLocation.appending(path: "tomli").path
         ))
 
-        // ada-url's upstream wheel currently lists build-only directories in
-        // top_level.txt. Native validation must use our signed manifest's
-        // declared import instead of attempting to import those names.
-        let adaURL = try await kit.packages.install(.pypiVersion("ada-url", "4.0.0"))
-        #expect(adaURL.nativeStatus == .bundledCompatible)
-        #expect(adaURL.metadata.topLevelModules.contains("build"))
-        try await kit.packages.uninstall("ada-url")
+        // ada-url is unbundled and contains native code; installing it must be rejected under bundledOnly policy.
+        do {
+            _ = try await kit.packages.install(.pypiVersion("ada-url", "4.0.0"))
+            Issue.record("Expected native binary unavailable error for unbundled ada-url")
+        } catch let PackageManagerError.nativeBinaryUnavailable(name) {
+            #expect(name.contains("ada-url") || name.contains("ada_url"))
+        }
 
-        // hanime-plugin remains an opt-in user plugin. Its two native
-        // dependencies must resolve to bundled implementations, and refresh
-        // must register HanimeTVIE ahead of GenericIE.
+        // hanime-plugin remains an opt-in user plugin. Its native
+        // dependency (pycryptodomex) resolves to the bundled implementation,
+        // and refresh must register HanimeTVIE ahead of GenericIE.
         let hanime = try await kit.plugins.install(
-            .pypiVersion("hanime-plugin", "2026.8.22")
+            .pypiVersion("hanime-plugin", "2026.9.27")
         )
         #expect(hanime.source == .managedPyPI)
         #expect(hanime.isLoaded)
-        for (name, version) in [("ada-url", "4.0.0"), ("pycryptodomex", "3.23.0")] {
-            let dependency = try #require(await kit.packages.package(named: name))
-            #expect(dependency.version == version)
-            #expect(dependency.nativeStatus == .bundledCompatible)
-            #expect(dependency.role == .ytdlpDependency)
-        }
+        let pycryptodome = try #require(await kit.packages.package(named: "pycryptodomex"))
+        #expect(pycryptodome.version == "3.23.0")
+        #expect(pycryptodome.nativeStatus == .bundledCompatible)
+        #expect(pycryptodome.role == .ytdlpDependency)
         let matches = try await kit.plugins.extractors(matchingURL: URL(
             string: "https://hanime.tv/videos/hentai/fuzzy-lips-1"
         )!)
