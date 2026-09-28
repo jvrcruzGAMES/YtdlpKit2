@@ -121,18 +121,24 @@ def framework(module, binary, marker, platform):
             run("install_name_tool", "-id", install_name, installed_binary)
         except Exception:
             pass
+    plist = {
+        "CFBundleDevelopmentRegion": "en",
+        "CFBundleExecutable": module,
+        "CFBundleIdentifier": f"dev.ytdlpkit2.python.{module}".replace("_", "-"),
+        "CFBundleInfoDictionaryVersion": "6.0",
+        "CFBundleName": module,
+        "CFBundlePackageType": "FMWK",
+        "CFBundleShortVersionString": "1.0",
+        "CFBundleVersion": "1",
+    }
+    if platform.startswith("ios"):
+        plist["MinimumOSVersion"] = "13.0"
+        plist["CFBundleSupportedPlatforms"] = ["iPhoneOS"] if platform == "ios-arm64" else ["iPhoneSimulator"]
+    else:
+        plist["LSMinimumSystemVersion"] = "13.0"
+        plist["CFBundleSupportedPlatforms"] = ["MacOSX"]
     with (directory / "Info.plist").open("wb") as output:
-        plistlib.dump({
-            "CFBundleDevelopmentRegion": "en",
-            "CFBundleExecutable": module,
-            "CFBundleIdentifier": f"dev.ytdlpkit2.python.{module}".replace("_", "-"),
-            "CFBundleInfoDictionaryVersion": "6.0",
-            "CFBundleName": module,
-            "CFBundlePackageType": "FMWK",
-            "CFBundleShortVersionString": "1.0",
-            "CFBundleVersion": "1",
-            "MinimumOSVersion": "13.0" if platform.startswith("ios") else "13.0",
-        }, output)
+        plistlib.dump(plist, output)
     (directory / f"{module}.origin").write_text(marker + "\n")
     return directory
 
@@ -169,11 +175,6 @@ def process_package(package, wheels):
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.write_text(f"Frameworks/{module}.framework/{module}\n")
 
-        # Copy the native macOS .so into PYTHON for direct use on macOS
-        so_destination = PYTHON / members[mac_platform][module]
-        so_destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(macos, so_destination)
-
         simulator = BUILD / "fat" / module / "ios-simulator"
         simulator.parent.mkdir(parents=True, exist_ok=True)
         run("lipo", "-create", binaries["ios-simulator-arm64"],
@@ -181,6 +182,7 @@ def process_package(package, wheels):
         slices = [
             framework(module, binaries["ios-arm64"], markers["ios-arm64"], "ios-arm64"),
             framework(module, simulator, markers["ios-simulator-arm64"], "ios-simulator"),
+            framework(module, macos, markers[mac_platform], "macos"),
         ]
         output = OUTPUT / f"{module}.xcframework"
         if output.exists():
@@ -230,11 +232,20 @@ def main():
             shutil.rmtree(stale)
     for stale in PYTHON.glob("_cffi_backend*"):
         stale.unlink()
+    for stale in PYTHON.rglob("*.so"):
+        stale.unlink()
+    for stale in PYTHON.rglob("*.dylib"):
+        stale.unlink()
     for package in manifest["packages"]:
         wheels = {name: wheel_file(package, name, artifact)
                   for name, artifact in package["wheels"].items()}
         process_package(package, wheels)
     patch_pycryptodomex_loader()
+    # Final cleanup to guarantee zero binary executables exist inside Python resources
+    for stale in PYTHON.rglob("*.so"):
+        stale.unlink()
+    for stale in PYTHON.rglob("*.dylib"):
+        stale.unlink()
     print(f"Created {len(list(OUTPUT.glob('*.xcframework')))} extension XCFrameworks")
 
 
