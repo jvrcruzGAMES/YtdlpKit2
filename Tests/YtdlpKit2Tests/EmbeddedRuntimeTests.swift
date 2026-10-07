@@ -210,12 +210,12 @@ struct EmbeddedRuntimeTests {
         })
         for (name, version) in [
             ("packaging", "26.3"),
-            ("charset-normalizer", "3.5.1"),
+            ("charset-normalizer", "3.5.2"),
             ("idna", "3.20"),
             ("mutagen", "1.48.1"),
             ("requests", "2.34.2"),
             ("urllib3", "2.8.0"),
-            ("websockets", "17.1"),
+            ("websockets", "17.2"),
         ] {
             #expect(core.contains {
                 $0.normalizedName == name && $0.version == version && $0.role == .runtimeCore

@@ -2,16 +2,16 @@
   "distribution": "BeeWare Python Apple Support",
   "upstream": "CPython",
   "pythonVersion": "3.14",
-  "release": "3.14-b11",
+  "release": "3.14-b12",
   "license": "Python-2.0",
   "artifacts": {
     "macOS": {
-      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.14-b11/Python-3.14-macOS-support.b11.tar.gz",
-      "sha256": "6b4c4e74128573c2330e579512e538fcc57b02df0748a0eae1b3e8922a71aac3"
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.14-b12/Python-3.14-macOS-support.b12.tar.gz",
+      "sha256": "c64f6431e336f3f7a830194a2a1aad1129077da51688d9d8807bfb3b52d73138"
     },
     "iOS": {
-      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.14-b11/Python-3.14-iOS-support.b11.tar.gz",
-      "sha256": "b591f3301bd22a4f423c49c746cac9e55558b909fd14d6eb8327ccc62234ab7b"
+      "url": "https://github.com/beeware/Python-Apple-support/releases/download/3.14-b12/Python-3.14-iOS-support.b12.tar.gz",
+      "sha256": "157a6b956f47a12f005ad1e23e3e264536ef06dd35e1366acb48edbaa128e0a3"
     }
   }
 }

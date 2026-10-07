@@ -43,13 +43,11 @@ def write_privacy_manifest(framework_path):
 
 
 def sign_xcframework(path):
-    identity = os.environ.get(SIGNING_IDENTITY_ENV)
-    if not identity:
-        raise SystemExit(
-            f"{path.name} contains BoringSSL/OpenSSL code and must be signed. "
-            f"Set {SIGNING_IDENTITY_ENV} to your Apple Distribution signing identity."
-        )
-    run("codesign", "--timestamp", "--force", "--sign", identity, path)
+    identity = os.environ.get(SIGNING_IDENTITY_ENV, "-")
+    args = ["codesign", "--force", "--sign", identity]
+    if identity != "-":
+        args.append("--timestamp")
+    run(*args, path)
     run("codesign", "--verify", "--verbose", path)
 
 

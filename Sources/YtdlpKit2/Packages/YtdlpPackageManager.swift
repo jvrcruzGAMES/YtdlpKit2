@@ -45,11 +45,11 @@ public actor YtdlpPackageManager {
         let pureCorePackages = [
             ("packaging", "26.3"),
             ("certifi", "2026.7.22"),
-            ("charset-normalizer", "3.5.1"),
+            ("charset-normalizer", "3.5.2"),
             ("idna", "3.20"),
             ("mutagen", "1.48.1"),
             ("urllib3", "2.8.0"),
-            ("websockets", "17.1"),
+            ("websockets", "17.2"),
             ("requests", "2.34.2"),
         ]
         for (name, version) in pureCorePackages

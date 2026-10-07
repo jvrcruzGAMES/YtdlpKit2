@@ -1,12 +1,12 @@
 {
   "packages": {
     "certifi": { "requirement": "certifi==2026.7.22", "role": "runtimeCore" },
-    "charset-normalizer": { "requirement": "charset-normalizer==3.5.1", "role": "runtimeCore" },
+    "charset-normalizer": { "requirement": "charset-normalizer==3.5.2", "role": "runtimeCore" },
     "idna": { "requirement": "idna==3.20", "role": "runtimeCore" },
     "mutagen": { "requirement": "mutagen==1.48.1", "role": "runtimeCore" },
     "requests": { "requirement": "requests==2.34.2", "role": "runtimeCore" },
     "urllib3": { "requirement": "urllib3==2.8.0", "role": "runtimeCore" },
-    "websockets": { "requirement": "websockets==17.1", "role": "runtimeCore" },
+    "websockets": { "requirement": "websockets==17.2", "role": "runtimeCore" },
     "yt-dlp": { "requirement": "yt-dlp==2026.8.19", "role": "runtimeCore" },
     "packaging": { "requirement": "packaging==26.3", "role": "runtimeCore" },
     "yt-dlp-ejs": { "requirement": "yt-dlp-ejs==0.8.0", "role": "runtimeCore" },
