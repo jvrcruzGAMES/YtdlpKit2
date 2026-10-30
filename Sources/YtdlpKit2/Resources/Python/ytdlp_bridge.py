@@ -6,7 +6,7 @@ import zipfile
 from ytdlp_hooks import NativeLogger, ProgressHook, YtdlpKitCancelled
 from ytdlp_serialization import dumps, normalize_media
 
-PINNED_VERSION = "2026.08.19"
+PINNED_VERSION = "2026.10.26"
 
 
 def _install_ffmpeg_bridge():

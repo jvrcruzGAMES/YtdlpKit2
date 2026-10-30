@@ -44,12 +44,12 @@ public actor YtdlpPackageManager {
         // managed environment instead of retaining the old database entry.
         let pureCorePackages = [
             ("packaging", "26.3"),
-            ("certifi", "2026.7.22"),
+            ("certifi", "2026.10.23"),
             ("charset-normalizer", "3.5.2"),
             ("idna", "3.20"),
             ("mutagen", "1.48.1"),
             ("urllib3", "2.8.0"),
-            ("websockets", "17.2"),
+            ("websockets", "17.3"),
             ("requests", "2.34.2"),
         ]
         for (name, version) in pureCorePackages
@@ -62,8 +62,8 @@ public actor YtdlpPackageManager {
         // sandbox. Install Mozilla's CA bundle explicitly and point every
         // Python HTTP backend at it before importing yt-dlp.
         _ = try await runtime.configureCertificateAuthorities()
-        if await database.package(named: "yt-dlp")?.version != "2026.8.19" {
-            _ = try await installPyPI(name: "yt-dlp", version: "2026.8.19",
+        if await database.package(named: "yt-dlp")?.version != "2026.10.26" {
+            _ = try await installPyPI(name: "yt-dlp", version: "2026.10.26",
                                       source: .pypi, role: .runtimeCore)
         }
         if await database.package(named: "yt-dlp-ejs")?.version != "0.8.0" {

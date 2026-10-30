@@ -5,7 +5,7 @@ import json
 import os
 
 YTDLP_FFMPEG_BRIDGE_VERSION = 1
-COMPATIBLE_YTDLP = "2026.08.19"
+COMPATIBLE_YTDLP = "2026.10.26"
 _operation_id = contextvars.ContextVar("ytdlpkit_media_operation", default="")
 _installed = False
 

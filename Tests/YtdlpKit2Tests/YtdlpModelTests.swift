@@ -74,7 +74,7 @@ struct YtdlpModelTests {
 
     @Test("Pinned yt-dlp is downloaded, not bundled")
     func packageBoundary() {
-        #expect(Bundle.main.url(forResource: "yt_dlp-2026.8.19-py3-none-any",
+        #expect(Bundle.main.url(forResource: "yt_dlp-2026.10.26-py3-none-any",
                                 withExtension: "whl") == nil)
     }
 

@@ -132,8 +132,8 @@ struct EmbeddedRuntimeTests {
         #expect(status.nativeBridgeVersion == "1")
         #expect(status.searchPaths.contains(status.sitePackagesDirectory.path))
         #expect(status.ytdlpInstalled)
-        #expect(status.ytdlpVersion == "2026.08.19")
-        #expect(try await kit.ytdlpVersion().string == "2026.08.19")
+        #expect(status.ytdlpVersion == "2026.10.26")
+        #expect(try await kit.ytdlpVersion().string == "2026.10.26")
     }
 
     @Test(
@@ -215,7 +215,7 @@ struct EmbeddedRuntimeTests {
             ("mutagen", "1.48.1"),
             ("requests", "2.34.2"),
             ("urllib3", "2.8.0"),
-            ("websockets", "17.2"),
+            ("websockets", "17.3"),
         ] {
             #expect(core.contains {
                 $0.normalizedName == name && $0.version == version && $0.role == .runtimeCore
