@@ -25,7 +25,7 @@ struct PackageManagerTests {
     func nativeRegistry() throws {
         let registry = try NativePackageRegistry.bundled()
         for (name, version) in [
-            ("Brotli", "1.2.0"),
+            ("Brotli", "1.2.1"),
             ("cffi", "2.0.0"),
             ("cryptography", "48.0.0"),
             ("curl-cffi", "0.16.2"),

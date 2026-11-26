@@ -50,9 +50,9 @@
   },
   "available": true,
   "ffmpegBridgeABI": 1,
-  "ffmpegKitNextCommit": "a724ed99583dcfe2af497c794fdd6b24ddd54a4e",
-  "ffmpegKitNextVersion": "9.0.0",
-  "ffmpegVersion": "9.0.1",
+  "ffmpegKitNextCommit": "9f04bf1e3c97def70b98e198cb80a57b43ef5b45",
+  "ffmpegKitNextVersion": "9.0.2",
+  "ffmpegVersion": "9.0.2",
   "frameworks": [
     "ffmpegkit",
     "libavcodec",

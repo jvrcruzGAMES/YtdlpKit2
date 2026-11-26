@@ -4,6 +4,6 @@
   "packages": {},
   "ytDlp": "2026.11.23",
   "ffmpegBridgeABI": 1,
-  "ffmpegKitNext": "9.0.0",
-  "ffmpeg": "9.0.1"
+  "ffmpegKitNext": "9.0.2",
+  "ffmpeg": "9.0.2"
 }

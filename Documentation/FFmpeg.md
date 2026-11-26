@@ -27,8 +27,8 @@ post-processing finish.
 
 ## Building
 
-The release build is pinned to FFmpegKitNext 9.0.0 commit
-`a724ed99583dcfe2af497c794fdd6b24ddd54a4e`, FFmpeg 9.0.1, and the upstream
+The release build is pinned to FFmpegKitNext 9.0.2 commit
+`9f04bf1e3c97def70b98e198cb80a57b43ef5b45`, FFmpeg 9.0.2, and the upstream
 `xcode26` Nix profile.
 
 ```sh

@@ -126,7 +126,7 @@ CPython.
 
 ## Building native Python packages
 
-The native-package set is Brotli 1.2.0, cffi 2.0.0, cryptography 48.0.0,
+The native-package set is Brotli 1.2.1, cffi 2.0.0, cryptography 48.0.0,
 curl-cffi 0.16.2, and pycryptodomex 3.23.0. Their artifacts and checksums are
 pinned. The build emits a static `_brotli.xcframework`, iOS XCFrameworks for
 each loadable extension, and macOS extension bundles. It does not bundle
