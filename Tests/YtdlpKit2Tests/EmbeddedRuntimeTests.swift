@@ -132,8 +132,8 @@ struct EmbeddedRuntimeTests {
         #expect(status.nativeBridgeVersion == "1")
         #expect(status.searchPaths.contains(status.sitePackagesDirectory.path))
         #expect(status.ytdlpInstalled)
-        #expect(status.ytdlpVersion == "2026.10.26")
-        #expect(try await kit.ytdlpVersion().string == "2026.10.26")
+        #expect(status.ytdlpVersion == "2026.11.23")
+        #expect(try await kit.ytdlpVersion().string == "2026.11.23")
     }
 
     @Test(
@@ -209,13 +209,13 @@ struct EmbeddedRuntimeTests {
             $0.normalizedName == "certifi" && $0.role == .runtimeCore
         })
         for (name, version) in [
-            ("packaging", "26.3"),
-            ("charset-normalizer", "3.5.2"),
+            ("packaging", "26.4"),
+            ("charset-normalizer", "3.5.3"),
             ("idna", "3.20"),
             ("mutagen", "1.48.1"),
             ("requests", "2.34.2"),
             ("urllib3", "2.8.0"),
-            ("websockets", "17.3"),
+            ("websockets", "17.4"),
         ] {
             #expect(core.contains {
                 $0.normalizedName == name && $0.version == version && $0.role == .runtimeCore
