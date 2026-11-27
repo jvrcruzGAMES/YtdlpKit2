@@ -8,44 +8,44 @@
   ],
   "artifactSHA256": {
     "ffmpegkit": {
-      "ios-arm64": "214c83a407596f3f6a7d0acc0ef5b1ec875aa51eb6d6bd19957ded372f5ee5a3",
-      "ios-arm64_x86_64-simulator": "1dd74ea8960daefc7913f6c30f0abccbec3760dca3fde7cd7050278c7547cfcb",
-      "macos-arm64_x86_64": "2bdc08cf14c6a18310a2b00153e9c51ac22d18e83a53cd02f549cc733c350fc2"
+      "ios-arm64": "8053e77d5865f0bf37bb5dba68de3c01c513f44b5903aa918793086c2544b7d2",
+      "ios-arm64_x86_64-simulator": "dfd85122939fa58d8f3f81de807f50d5a7aa9d216c40347ef8ebe6f808d65bfb",
+      "macos-arm64_x86_64": "f8c2030c91584027f987f996c9f23a5bf55547db5fdc824686ed4c4e3e127147"
     },
     "libavcodec": {
-      "ios-arm64": "242bf0d9c7c0dfd2777598ef76679088c109a8d8750da27ff74e4a7d63c0818d",
-      "ios-arm64_x86_64-simulator": "c681a6238a8bf875c7b5d9f70cc79064a938a86922287248934b2710587d1f09",
-      "macos-arm64_x86_64": "0920f6202dc9bd2c4503b843b77a2edfe28b774c7b15e1a1cf0d8cde0f976727"
+      "ios-arm64": "3a66be16a273dba3a6730fa36764d849ee631e7eaf9a004086f23f2f70a2d98f",
+      "ios-arm64_x86_64-simulator": "5c4feb0deaccd31f9b92c5a3384ab193079abdb706b1c8de316f75caa3a4ff2d",
+      "macos-arm64_x86_64": "a30c9f0943441a811ab825ee5d3757bfe99b821717d5bd815776b3ea708eda67"
     },
     "libavdevice": {
-      "ios-arm64": "65ad7f3f9ecf0292b95597feb5420bdb5965c6dd09181cb6702d4068696b5e9f",
-      "ios-arm64_x86_64-simulator": "9ede02c2ccef820bc1109a5740d95789a58c355c078e6e1205fac8faa816d5d6",
-      "macos-arm64_x86_64": "a242ea5fc5b90159b4c09fd774ee59c048d0868764998a42946a76de25331733"
+      "ios-arm64": "efe730ed899316b8f4d82135fb68fad4af8fea1a56b6efd3fd125c288edece06",
+      "ios-arm64_x86_64-simulator": "2b0496f98421adc3ba1b035893d075113172efb092ccf06280072ba6792226d8",
+      "macos-arm64_x86_64": "ca2ccfc38849f89f95f461c125be19814e32760a956d8e1832fb5482ca5d81bf"
     },
     "libavfilter": {
-      "ios-arm64": "4c843843b967139c33eeb30ee94102d02de4ad87d4fb540daa6a894c4d5d91ab",
-      "ios-arm64_x86_64-simulator": "301ecdc340f79b4621e6205b5b056e58252c671f9ba40505c05d36458c8b5e9d",
-      "macos-arm64_x86_64": "93ac7f6c45078b9498c1dbfb0d9499e9dac87eee52af62c8ceb884a422313aa4"
+      "ios-arm64": "bac2c3e058977ee8202462dd26c87b35852572dcfc35f916e325beed7d1b1763",
+      "ios-arm64_x86_64-simulator": "bdf9870ad06912e4547fc999a0f7ffeaff793e37ef99f767ecac18c43b2d7f8d",
+      "macos-arm64_x86_64": "be9969066167b64fc3a5639e66942b679c099f4d98fddedbcfdd2d42136c43b0"
     },
     "libavformat": {
-      "ios-arm64": "7b46d67a2917b66a1f262dc0a65d931aef8a236ebcac83599d18e890bc1bbc0d",
-      "ios-arm64_x86_64-simulator": "ed8dc3f26e454cfbaf699ebe7e8b1ebce6ea677af86b1bb61f1d815a8cbd9695",
-      "macos-arm64_x86_64": "88d25a2e99094fce29525f079bc6e894ecb0157459d14a4facf572c8d90bf0fc"
+      "ios-arm64": "adf0411201bdf960ed46b067f8fd8b0367915ca933b1d6dfec49d935ddde3a6f",
+      "ios-arm64_x86_64-simulator": "779582a0123bbfb8aed404d1b820e4690f3d54ebada483bfb0da0b2f86566a52",
+      "macos-arm64_x86_64": "39808b9774efba0d933caa606b32db785f1c052983bef77c57d114d5bc70fa15"
     },
     "libavutil": {
-      "ios-arm64": "b4be38c77a8ccb0ac17f35f95d671031b84239f53ef7e7f508c8f76d430583ea",
-      "ios-arm64_x86_64-simulator": "263174d06c7f71c92bb77bb286bb9cc5e24821eae0f6768eff30213091d18420",
-      "macos-arm64_x86_64": "d283560d91f9b672557e6e5c5602cc8dc1d8672cfd1c2a132d0a63d24602a411"
+      "ios-arm64": "a85ae45a1fd916bd2a721f12918296ce2c36a68e575a67764ffbd5dadb76d9f9",
+      "ios-arm64_x86_64-simulator": "38c8756197e4b6ae49617a735722213bc01bc23b262de49d644766b12983f6ec",
+      "macos-arm64_x86_64": "26534eeb3588518de5d302bf9c68d9ad14fc3e13d5d4d76451ebfca36d1261ac"
     },
     "libswresample": {
-      "ios-arm64": "9c65486ef87644dfcdacf0a4c507cc8babfadae5c1829e4223dc92cc0c4f276b",
-      "ios-arm64_x86_64-simulator": "555ef5161e24569279b9a85d1fd30f9d31403d3471051e29741fb0cb19908f6f",
-      "macos-arm64_x86_64": "dfc3a37e865a484b2b5cfc918261934942db62450a7463ecc64c42d1adbd3ad6"
+      "ios-arm64": "8b1b9ce689a451c12657b40d58c66aae7f1f47fce5f79b6b14e32d17f962737a",
+      "ios-arm64_x86_64-simulator": "89897fa54d18407ad7ca6ab7e2176bf60daaf4a0f536743fee61de6258055290",
+      "macos-arm64_x86_64": "faa4fe613f461eb08d1406af4354ceda120b5f764a67cdb66785c217253e884f"
     },
     "libswscale": {
-      "ios-arm64": "e97e0cd7fe22617637aad8bec7e6d0fcfe5e50792c9e431d526c959e32a8d0f8",
-      "ios-arm64_x86_64-simulator": "96a02ddab8f8bd9d341d5b6679620d76c57caadc446744c4e8cd7a1a4314cdcc",
-      "macos-arm64_x86_64": "28b0c58148ab9b124a772d38986f5d80690ade5ccd98224359d4e93f508139ae"
+      "ios-arm64": "ac72f66a1bff6f841e95722f5716b2a2c152839b6f1253bfd850f51452523fe7",
+      "ios-arm64_x86_64-simulator": "55577c1aa2f99cf42c9ac621e1c251521cb353ed284dae3a1916305fb373c6f8",
+      "macos-arm64_x86_64": "fc650465352f54d5c9688d1d95be490d3cfa314e7c82356251390f00d0b8f09d"
     }
   },
   "available": true,

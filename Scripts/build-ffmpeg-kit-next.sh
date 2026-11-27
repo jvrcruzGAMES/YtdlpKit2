@@ -3,7 +3,12 @@ set -eu
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 root="$script_dir/.."
 source_dir="$root/.native-build/ffmpeg-kit-next"
-commit=a724ed99583dcfe2af497c794fdd6b24ddd54a4e
+commit=$(python3 -c 'import json; print(json.load(open("'"$script_dir"'/ffmpeg-kit-next.json"))["ffmpegKitNextCommit"])')
+
+if [ -d "/nix/var/nix/profiles/default/bin" ]; then
+    export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+fi
+
 if ! command -v nix >/dev/null 2>&1; then
     echo "Nix is required by FFmpegKitNext's supported Apple build workflow." >&2
     echo "Install Nix, then rerun this script; SwiftPM consumers never need Nix." >&2
