@@ -47,7 +47,7 @@ let hasFFmpegKitNext = ffmpegLibraries.allSatisfy {
         .appendingPathComponent("Native/FFmpegKitNext/\($0).xcframework/Info.plist").path)
 }
 if hasFFmpegKitNext {
-    ytdlpDependencies.append(contentsOf: ffmpegLibraries.map { .target(name: "YtdlpKit2FFmpeg_\($0)") })
+    ytdlpDependencies.append(contentsOf: ffmpegLibraries.map { Target.Dependency.byName(name: $0) })
 }
 ytdlpDependencies.append(contentsOf: extensionTargets.map {
     .target(name: $0.name, condition: .when(platforms: [.iOS]))
@@ -94,7 +94,7 @@ packageTargets.append(contentsOf: stdlibExtensionTargets.map {
 })
 if hasFFmpegKitNext {
     packageTargets.append(contentsOf: ffmpegLibraries.map {
-        .binaryTarget(name: "YtdlpKit2FFmpeg_\($0)", path: "Native/FFmpegKitNext/\($0).xcframework")
+        .binaryTarget(name: $0, path: "Native/FFmpegKitNext/\($0).xcframework")
     })
 }
 
